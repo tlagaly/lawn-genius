@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Auth
+  password      String?   // Hashed password for email/password auth
+  accounts      Account[]
+  sessions      Session[]
+
+  // Profile & Subscription
+  subscription  Subscription?
+  lawnProfiles  LawnProfile[]
+  schedules     Schedule[]
+  payments      Payment[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LawnProfile {
+  id            String    @id @default(cuid())
+  userId        String
+  name          String    // e.g. "Front Yard", "Back Yard"
+  size          Float     // Size in square feet
+  grassType     String    // e.g. "Bermuda", "Kentucky Bluegrass"
+  soilType      String    // e.g. "Clay", "Sandy", "Loam"
+  sunExposure   String    // e.g. "Full Sun", "Partial Shade", "Full Shade"
+  irrigation    Boolean   // Has irrigation system
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  location      String?   // City/State for weather data
+  notes         String?   @db.Text
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedules     Schedule[]
+}
+
+model Schedule {
+  id            String    @id @default(cuid())
+  userId        String
+  lawnProfileId String
+  name          String
+  startDate     DateTime
+  endDate       DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lawnProfile   LawnProfile @relation(fields: [lawnProfileId], references: [id], onDelete: Cascade)
+  treatments    Treatment[]
+}
+
+model Treatment {
+  id          String    @id @default(cuid())
+  scheduleId  String
+  type        String    // e.g. "Fertilization", "Weed Control", "Mowing"
+  date        DateTime
+  completed   Boolean   @default(false)
+  notes       String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  schedule    Schedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  stripeId      String?   @unique // Stripe subscription ID
+  status        String    // active, canceled, past_due
+  plan          String    // free, basic, pro
+  startDate     DateTime  @default(now())
+  endDate       DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments      Payment[]
+}
+
+model Payment {
+  id              String    @id @default(cuid())
+  userId          String
+  subscriptionId  String
+  stripeId        String?   // Stripe payment intent ID
+  amount          Float
+  currency        String
+  status          String    // succeeded, pending, failed
+  createdAt       DateTime  @default(now())
+
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+}

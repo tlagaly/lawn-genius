@@ -1,14 +1,16 @@
 import { inferAsyncReturnType } from '@trpc/server';
-import { CreateNextContextOptions } from '@trpc/server/adapters/next';
 import { getServerSession } from 'next-auth';
 import { prisma } from '../db/prisma';
 import { authOptions } from '../auth/auth-options';
 
-export async function createContext(opts: CreateNextContextOptions) {
-  const session = await getServerSession(opts.req, opts.res, authOptions);
+interface CreateContextOptions {
+  headers: Headers;
+  session: Awaited<ReturnType<typeof getServerSession>> | null;
+}
 
+export async function createContext(opts: CreateContextOptions) {
   return {
-    session,
+    session: opts.session,
     prisma,
     // Add any other context properties here
   };

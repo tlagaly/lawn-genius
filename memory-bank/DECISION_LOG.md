@@ -1,65 +1,49 @@
-# Technical Decision Log
+# Decision Log
 
-## Authentication & Authorization (2025-03-04)
-- Decision: Use NextAuth.js for authentication
-- Rationale: 
-  - Built-in support for multiple providers (email/password, social logins)
-  - Seamless integration with Next.js
-  - Built-in CSRF protection
-  - Session management
-  - TypeScript support
-  - Active maintenance and community support
+## Authentication Implementation (2025-03-04)
+- Chose NextAuth.js for authentication
+- Implemented email/password and OAuth providers
+- Created separate auth pages with responsive forms
+- Added password reset functionality
 
-## Database (2025-03-04)
-- Decision: Use PostgreSQL with Prisma ORM
-- Rationale:
-  - Relational database needed for complex relationships between users, schedules, and lawn data
-  - Prisma provides type-safe database access
-  - PostgreSQL offers robust geospatial features needed for location-based recommendations
-  - Strong data integrity and transaction support
-  - Scalable for future growth
+## Project Structure (2025-03-04)
+- Organized by feature-first approach
+- Separate directories for components, lib, and app
+- Clear separation of client/server code
+- TypeScript for type safety
 
-## Payment Processing (2025-03-04)
-- Decision: Implement Stripe for payment processing
-- Rationale:
-  - Comprehensive subscription management
-  - Secure payment processing
-  - Webhook support for automated billing
-  - Developer-friendly API
-  - Extensive documentation
+## Database Schema (2025-03-04)
+- PostgreSQL with Prisma ORM
+- Comprehensive user profile model
+- Flexible lawn profile schema
+- Extensible schedule and treatment system
 
 ## API Architecture (2025-03-04)
-- Decision: Use tRPC for type-safe API routes
-- Rationale:
-  - End-to-end type safety between frontend and backend
-  - Automatic API documentation
+- tRPC for type-safe API
+- Separate routers by domain
+- Protected routes with session validation
+- Efficient data fetching patterns
+
+## Lawn Profile Management (2025-03-05)
+- Created reusable form component for create/edit
+  - Validation built-in
+  - Error handling
+  - Loading states
+- Grid layout for profile list
+  - Responsive design
+  - Quick actions
+  - Empty state handling
+- Detailed view with two-column layout
+  - Comprehensive information display
+  - Schedule integration
+  - Action buttons
+- Server-side TRPC implementation
+  - Separate client/server utilities
+  - Type-safe operations
   - Efficient data fetching
-  - Built-in validation
-  - Excellent developer experience
 
-## State Management (2025-03-04)
-- Decision: Use React Query with Zustand
-- Rationale:
-  - React Query for server state management
-  - Zustand for simple client state management
-  - TypeScript support
-  - Minimal boilerplate
-  - Good performance characteristics
-
-## Weather Data Integration (2025-03-04)
-- Decision: Use OpenWeather API
-- Rationale:
-  - Comprehensive weather data
-  - Affordable pricing
-  - Good documentation
-  - Reliable service
-  - Supports both current conditions and forecasts
-
-## Deployment Strategy (2025-03-04)
-- Decision: Deploy on Vercel
-- Rationale:
-  - Native Next.js support
-  - Automatic HTTPS
-  - Edge functions support
-  - Built-in CI/CD
-  - Serverless architecture
+## Next Steps
+- Implement schedule management
+- Add weather integration
+- Create treatment tracking
+- Build notification system

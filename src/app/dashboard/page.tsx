@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/auth-options";
 import Link from "next/link";
+import { WeatherAlerts } from "@/components/dashboard/WeatherAlerts";
 
 export const metadata: Metadata = {
   title: "Dashboard | Lawn Genius",
@@ -21,6 +22,11 @@ export default async function DashboardPage() {
         <p className="mt-2 text-sm text-gray-600">
           Manage your lawn care schedule and track your progress.
         </p>
+      </div>
+
+      {/* Weather Alerts */}
+      <div className="rounded-lg border-l-4 border-l-yellow-500 border-y border-r border-gray-200 bg-white p-6">
+        <WeatherAlerts />
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

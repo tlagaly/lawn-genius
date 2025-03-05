@@ -36,10 +36,19 @@
 
 ## External Services Integration
 
-### Weather Services (Planned)
-- Weather data integration
-- Smart scheduling based on weather conditions
-- Treatment recommendations based on weather
+### Weather Services
+- OpenWeather API integration for real-time weather data
+- Smart scheduling with weather condition analysis
+- Treatment recommendations based on weather conditions
+- Weather score calculation for treatment timing
+- Historical weather data tracking
+- Treatment effectiveness analysis with weather correlation
+- Real-time weather monitoring system
+- Weather alert generation and management
+- Severity-based alert classification
+- Intelligent rescheduling suggestions
+- Weather condition violation detection
+- Treatment timing optimization
 
 ### Payment Processing
 - Stripe integration

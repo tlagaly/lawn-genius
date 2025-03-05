@@ -5,6 +5,7 @@ import { api } from '@/lib/trpc/client';
 import { type inferRouterOutputs } from '@trpc/server';
 import { type AppRouter } from '@/lib/trpc/root';
 import { type TRPCClientErrorLike } from '@trpc/client';
+import { TREATMENT_CONDITIONS } from '@/lib/weather/types';
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
 type Schedule = RouterOutputs['schedule']['getAll'][0];
@@ -13,6 +14,51 @@ type Treatment = Schedule['treatments'][0];
 interface TreatmentListProps {
   scheduleId: string;
   onTreatmentUpdate?: () => void;
+}
+
+function WeatherScore({ score }: { score?: number }) {
+  if (!score) return null;
+
+  const getScoreColor = (score: number) => {
+    if (score >= 4) return 'text-green-600';
+    if (score >= 3) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  return (
+    <div className={`text-sm font-medium ${getScoreColor(score)}`}>
+      Weather Score: {score}/5
+    </div>
+  );
+}
+
+function EffectivenessRating({ 
+  treatment, 
+  onRate 
+}: { 
+  treatment: Treatment; 
+  onRate: (rating: number) => void;
+}) {
+  return (
+    <div className="mt-2">
+      <label className="text-sm text-gray-600">Effectiveness:</label>
+      <div className="flex gap-2 mt-1">
+        {[1, 2, 3, 4, 5].map((rating) => (
+          <button
+            key={rating}
+            onClick={() => onRate(rating)}
+            className={`w-8 h-8 rounded-full ${
+              treatment.effectiveness === rating
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-100 hover:bg-gray-200'
+            }`}
+          >
+            {rating}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function TreatmentList({ scheduleId, onTreatmentUpdate }: TreatmentListProps) {
@@ -24,6 +70,7 @@ export function TreatmentList({ scheduleId, onTreatmentUpdate }: TreatmentListPr
   });
 
   const { data: schedule } = api.schedule.getById.useQuery(scheduleId);
+  const analyzeTreatment = api.schedule.analyzeTreatmentEffectiveness.useMutation();
   
   const addTreatment = api.schedule.addTreatment.useMutation({
     onSuccess: () => {
@@ -80,14 +127,39 @@ export function TreatmentList({ scheduleId, onTreatmentUpdate }: TreatmentListPr
       await updateTreatment.mutateAsync({
         id: treatment.id,
         data: {
-          type: treatment.type,
-          date: treatment.date,
-          notes: treatment.notes,
           completed: !treatment.completed,
         },
       });
     } catch (err) {
       setError('Failed to update treatment');
+    }
+  };
+
+  const handleRateEffectiveness = async (treatment: Treatment, rating: number) => {
+    try {
+      await updateTreatment.mutateAsync({
+        id: treatment.id,
+        data: {
+          effectiveness: rating,
+        },
+      });
+
+      // Get analysis after rating
+      const analysis = await analyzeTreatment.mutateAsync({
+        treatmentId: treatment.id,
+      });
+
+      // Update treatment with analysis
+      await updateTreatment.mutateAsync({
+        id: treatment.id,
+        data: {
+          notes: treatment.notes 
+            ? `${treatment.notes}\n\nEffectiveness Analysis:\n${analysis.join('\n')}`
+            : `Effectiveness Analysis:\n${analysis.join('\n')}`,
+        },
+      });
+    } catch (err) {
+      setError('Failed to update treatment effectiveness');
     }
   };
 
@@ -112,16 +184,21 @@ export function TreatmentList({ scheduleId, onTreatmentUpdate }: TreatmentListPr
           <label htmlFor="type" className="block text-sm font-medium text-gray-700">
             Treatment Type
           </label>
-          <input
-            type="text"
+          <select
             id="type"
             value={newTreatment.type}
             onChange={(e) =>
               setNewTreatment((prev) => ({ ...prev, type: e.target.value }))
             }
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-            placeholder="Fertilization, Weed Control, etc."
-          />
+          >
+            <option value="">Select a treatment type</option>
+            {Object.keys(TREATMENT_CONDITIONS).map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
@@ -173,33 +250,55 @@ export function TreatmentList({ scheduleId, onTreatmentUpdate }: TreatmentListPr
             {schedule.treatments.map((treatment: Treatment) => (
               <div
                 key={treatment.id}
-                className="flex items-center justify-between p-4 bg-white rounded-lg shadow"
+                className="p-4 bg-white rounded-lg shadow space-y-2"
               >
-                <div className="flex items-center space-x-4">
-                  <input
-                    type="checkbox"
-                    checked={treatment.completed}
-                    onChange={() => handleToggleComplete(treatment)}
-                    className="h-4 w-4 text-green-600 rounded"
-                  />
-                  <div>
-                    <h4 className="font-medium">{treatment.type}</h4>
-                    <p className="text-sm text-gray-500">
-                      {new Date(treatment.date).toLocaleDateString()}
-                    </p>
-                    {treatment.notes && (
-                      <p className="text-sm text-gray-600 mt-1">
-                        {treatment.notes}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <input
+                      type="checkbox"
+                      checked={treatment.completed}
+                      onChange={() => handleToggleComplete(treatment)}
+                      className="h-4 w-4 text-green-600 rounded"
+                    />
+                    <div>
+                      <h4 className="font-medium">{treatment.type}</h4>
+                      <p className="text-sm text-gray-500">
+                        {new Date(treatment.date).toLocaleDateString()}
                       </p>
-                    )}
+                    </div>
                   </div>
+                  <button
+                    onClick={() => handleDelete(treatment.id)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    Delete
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleDelete(treatment.id)}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  Delete
-                </button>
+
+                <WeatherScore score={treatment.weatherScore} />
+
+                {treatment.completed && (
+                  <EffectivenessRating
+                    treatment={treatment}
+                    onRate={(rating) => handleRateEffectiveness(treatment, rating)}
+                  />
+                )}
+
+                {treatment.notes && (
+                  <div className="mt-2 text-sm text-gray-600 whitespace-pre-line">
+                    {treatment.notes}
+                  </div>
+                )}
+
+                {treatment.weatherData && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    <h5 className="font-medium">Weather Conditions:</h5>
+                    <p>Temperature: {Math.round(treatment.weatherData.temperature)}°C</p>
+                    <p>Humidity: {treatment.weatherData.humidity}%</p>
+                    <p>Wind Speed: {treatment.weatherData.windSpeed} km/h</p>
+                    <p>Conditions: {treatment.weatherData.conditions}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>

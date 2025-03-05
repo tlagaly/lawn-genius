@@ -79,7 +79,9 @@ model LawnProfile {
   irrigation    Boolean   // Has irrigation system
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  location      String?   // City/State for weather data
+  latitude      Float?    // Latitude for precise weather data
+  longitude     Float?    // Longitude for precise weather data
+  timezone      String?   // Local timezone for accurate scheduling
   notes         String?   @db.Text
 
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -102,16 +104,49 @@ model Schedule {
 }
 
 model Treatment {
-  id          String    @id @default(cuid())
-  scheduleId  String
-  type        String    // e.g. "Fertilization", "Weed Control", "Mowing"
-  date        DateTime
-  completed   Boolean   @default(false)
-  notes       String?   @db.Text
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  scheduleId      String
+  type            String    // e.g. "Fertilization", "Weed Control", "Mowing"
+  date            DateTime
+  completed       Boolean   @default(false)
+  effectiveness   Int?      // Scale of 1-5
+  weatherScore    Int?      // Weather suitability score 1-5
+  actualDuration  Int?      // Actual duration in minutes
+  notes           String?   @db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  schedule    Schedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  schedule        Schedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  weatherData     WeatherCondition?
+  weatherAlerts   WeatherAlert[]
+}
+
+model WeatherAlert {
+  id            String    @id @default(cuid())
+  treatmentId   String
+  type          String    // temperature, wind, precipitation, conditions
+  severity      String    // warning, critical
+  message       String
+  suggestedDate DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  treatment     Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+}
+
+model WeatherCondition {
+  id              String    @id @default(cuid())
+  treatmentId     String    @unique
+  temperature     Float
+  humidity        Float
+  precipitation   Float
+  windSpeed      Float
+  conditions     String    // e.g. "Clear", "Rain", "Cloudy"
+  forecast       Json?     // Stored forecast data
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  treatment      Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
 }
 
 model Subscription {

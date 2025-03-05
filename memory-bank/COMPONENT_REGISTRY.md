@@ -1,39 +1,32 @@
 # Component Registry
 
-## Auth Components
-- `LoginForm`: Handles user login with email/password
-- `RegisterForm`: New user registration form
-- `ForgotPasswordForm`: Password reset request form
-
-## Dashboard Components
-- `DashboardNav`: Navigation menu for dashboard sections
-
-## Lawn Components
-- `LawnProfileForm`: Form for creating and editing lawn profiles
-  - Handles both create and edit modes
-  - Full validation and error handling
-  - Fields: name, size, grass type, soil type, sun exposure, irrigation, location, notes
-
-- `LawnProfileList`: Grid display of lawn profiles
-  - Shows basic lawn information
-  - Quick actions (view, edit, delete)
-  - Empty state handling
-
-- `LawnProfileDetail`: Detailed view of a lawn profile
-  - Comprehensive lawn information display
-  - Associated schedules section
-  - Edit and delete actions
-  - Two-column layout
+## Authentication Components
+- LoginForm: User login interface
+- RegisterForm: New user registration
+- ForgotPasswordForm: Password reset request
 
 ## Navigation Components
-- `MainNav`: Main site navigation
-- `Footer`: Site footer
+- MainNav: Main navigation bar
+- Footer: Site footer
+- DashboardNav: Dashboard navigation menu
 
-## Schedule Components
-(To be implemented)
+## Lawn Management Components
+- LawnProfileForm: Create/edit lawn profiles
+- LawnProfileList: Display lawn profiles
+- LawnProfileDetail: Show detailed lawn information
 
-## Subscription Components
-(To be implemented)
+## Schedule Management Components
+- ScheduleForm: Create and edit treatment schedules
+- ScheduleCalendar: Calendar view of treatments
+- TreatmentList: Manage and track treatments
 
 ## UI Components
-(Base components to be added)
+- Various reusable UI components
+
+## Pages
+- Landing page (/)
+- Dashboard (/dashboard)
+- Lawn management (/dashboard/lawn)
+- Schedule management (/dashboard/schedule)
+- Settings (/dashboard/settings)
+- Authentication pages (/auth/*)

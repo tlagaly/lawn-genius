@@ -6,6 +6,7 @@ const treatmentSchema = z.object({
   type: z.string().min(1),
   date: z.date(),
   notes: z.string().optional(),
+  completed: z.boolean().optional(),
 });
 
 const scheduleSchema = z.object({

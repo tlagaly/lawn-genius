@@ -1,49 +1,63 @@
 # Decision Log
 
-## Authentication Implementation (2025-03-04)
-- Chose NextAuth.js for authentication
-- Implemented email/password and OAuth providers
-- Created separate auth pages with responsive forms
-- Added password reset functionality
+## Authentication System
+- Chose NextAuth.js for flexible authentication support
+- Implemented both email/password and OAuth strategies
+- Added password reset functionality for better user experience
 
-## Project Structure (2025-03-04)
-- Organized by feature-first approach
-- Separate directories for components, lib, and app
-- Clear separation of client/server code
-- TypeScript for type safety
+## Database Design
+- Selected PostgreSQL for robust relational data management
+- Using Prisma for type-safe database operations
+- Implemented soft deletion for data recovery capability
 
-## Database Schema (2025-03-04)
-- PostgreSQL with Prisma ORM
-- Comprehensive user profile model
-- Flexible lawn profile schema
-- Extensible schedule and treatment system
+## API Architecture
+- Adopted TRPC for end-to-end type safety
+- Created modular router structure for scalability
+- Implemented protected procedures for secure data access
 
-## API Architecture (2025-03-04)
-- tRPC for type-safe API
-- Separate routers by domain
-- Protected routes with session validation
-- Efficient data fetching patterns
+## Frontend Architecture
+- Chose Next.js App Router for modern routing capabilities
+- Using React Server Components where applicable
+- Implemented client-side components for interactive features
 
-## Lawn Profile Management (2025-03-05)
-- Created reusable form component for create/edit
-  - Validation built-in
-  - Error handling
-  - Loading states
-- Grid layout for profile list
-  - Responsive design
-  - Quick actions
-  - Empty state handling
-- Detailed view with two-column layout
-  - Comprehensive information display
-  - Schedule integration
-  - Action buttons
-- Server-side TRPC implementation
-  - Separate client/server utilities
-  - Type-safe operations
-  - Efficient data fetching
+## Lawn Management
+- Structured lawn profiles for multiple lawn support
+- Included detailed lawn characteristics for precise care
+- Added location tracking for weather integration
 
-## Next Steps
-- Implement schedule management
-- Add weather integration
-- Create treatment tracking
-- Build notification system
+## Schedule Management
+- Implemented calendar-based treatment scheduling
+- Added treatment completion tracking
+- Designed for future weather data integration
+- Created modular components for maintainability:
+  * ScheduleForm for schedule creation/editing
+  * ScheduleCalendar for visual treatment planning
+  * TreatmentList for treatment management
+- Integrated with lawn profiles for context-aware scheduling
+- Prepared system for smart scheduling features
+
+## Subscription System
+- Designed tiered subscription model
+- Integrated Stripe for payment processing
+- Implemented subscription status tracking
+
+## Weather Integration (Planned)
+- Added location field to lawn profiles for weather data
+- Designed schedule system to accommodate weather-based adjustments
+- Prepared for smart scheduling implementation
+
+## UI/UX Decisions
+- Using Tailwind CSS for consistent styling
+- Implemented responsive design for all devices
+- Created intuitive navigation structure
+- Added visual feedback for user actions
+
+## Testing Strategy
+- Unit tests for critical business logic
+- Integration tests for API endpoints
+- End-to-end testing for critical user flows
+
+## Deployment
+- Selected Vercel for production hosting
+- Implemented CI/CD pipeline
+- Set up environment-based configuration

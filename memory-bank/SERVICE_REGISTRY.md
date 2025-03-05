@@ -1,70 +1,53 @@
 # Service Registry
 
-## Authentication Service
-- User registration and login
-- Social authentication providers
+## Authentication Services
+- NextAuth.js for authentication
+- Email/password and OAuth providers
 - Password reset functionality
-- Session management
-- Role-based access control
 
-## User Service
-- User profile management
-- User preferences
+## Database Services
+- PostgreSQL database
+- Prisma ORM
+- Database schema management
+
+## API Services (TRPC)
+
+### User Management
+- User registration
+- Profile management
+- Account settings
+
+### Lawn Management
+- Create/update lawn profiles
+- Lawn metrics tracking
+- Multiple lawn support
+
+### Schedule Management
+- Treatment schedule creation and management
+- Treatment tracking with completion status
+- Calendar-based scheduling
+- Integration with lawn profiles
+- Foundation for weather-based scheduling
+
+### Subscription Management
+- Subscription plans
+- Payment processing (Stripe)
 - Subscription status tracking
-- Usage analytics
 
-## Lawn Profile Service
-- Lawn size and characteristics
-- Soil type management
-- Grass type tracking
-- Shade conditions
-- Irrigation system details
+## External Services Integration
 
-## Schedule Service
-- Treatment schedule generation
-- Calendar management
-- Task tracking
-- Reminder system
-- Weather-based adjustments
+### Weather Services (Planned)
+- Weather data integration
+- Smart scheduling based on weather conditions
+- Treatment recommendations based on weather
 
-## Weather Service
-- Current weather conditions
-- Weather forecasts
-- Historical weather data
-- Weather alerts
-- Climate zone determination
+### Payment Processing
+- Stripe integration
+- Secure payment handling
+- Subscription management
 
-## Recommendation Service
-- Treatment recommendations
-- Product suggestions
-- Seasonal advice
-- Problem diagnosis
-- Care instructions
-
-## Subscription Service
-- Plan management
-- Payment processing
-- Billing history
-- Usage limits
-- Feature access control
-
-## Notification Service
-- Email notifications
-- Push notifications
-- SMS alerts
-- In-app notifications
-- Communication preferences
-
-## Analytics Service
-- Usage tracking
-- Performance metrics
-- User behavior analysis
-- Feature adoption rates
-- Error tracking
-
-## Integration Service
-- Weather API integration
-- Payment gateway integration
-- Email service integration
-- SMS gateway integration
-- Third-party API management
+## Infrastructure
+- Next.js application framework
+- TRPC for type-safe APIs
+- Tailwind CSS for styling
+- Vercel deployment

@@ -23,13 +23,7 @@ export default async function DashboardLayout({
           <div className="flex h-full flex-col">
             {/* Logo */}
             <div className="flex h-16 items-center border-b border-gray-200 px-4">
-              <Image
-                src="/logo.svg"
-                alt="Lawn Genius"
-                width={32}
-                height={32}
-                className="h-8 w-8"
-              />
+              <span className="text-green-600 text-2xl font-bold">LG</span>
               <span className="ml-2 text-lg font-semibold text-gray-900">
                 Lawn Genius
               </span>

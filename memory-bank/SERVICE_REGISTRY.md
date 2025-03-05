@@ -4,6 +4,11 @@
 - NextAuth.js for authentication
 - Email/password and OAuth providers
 - Password reset functionality
+- JWT session handling
+- Custom callbacks for user data
+- Prisma adapter integration
+- Error handling and redirection
+- Secure credential validation
 
 ## Database Services
 - PostgreSQL database
@@ -13,9 +18,22 @@
 ## API Services (TRPC)
 
 ### User Management
-- User registration
+- User registration with default preferences
 - Profile management
 - Account settings
+- Notification preferences
+
+### Notification Services
+- Email notifications via Resend
+- Push notifications via Web Push API
+- Notification preference management
+- Notification history tracking
+- Service worker for push handling
+- VAPID key infrastructure
+- Alert threshold management
+- Notification batching and frequency control
+- Delivery status tracking
+- User interaction monitoring
 
 ### Lawn Management
 - Create/update lawn profiles
@@ -35,6 +53,19 @@
 - Subscription status tracking
 
 ## External Services Integration
+
+### Email Service
+- Resend for transactional emails
+- Email template system
+- Delivery tracking
+- Email preference management
+
+### Push Notification Service
+- Web Push API integration
+- Service worker implementation
+- Browser permission handling
+- Subscription management
+- Cross-browser support
 
 ### Weather Services
 - OpenWeather API integration for real-time weather data
@@ -60,3 +91,7 @@
 - TRPC for type-safe APIs
 - Tailwind CSS for styling
 - Vercel deployment
+- TRPCProvider with:
+  * SuperJSON transformer
+  * HTTP batch link
+  * React Query integration

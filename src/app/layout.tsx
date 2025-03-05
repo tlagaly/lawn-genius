@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { MainNav } from "@/components/navigation/MainNav";
 import { Footer } from "@/components/navigation/Footer";
+import { TRPCProvider } from "@/components/providers/TRPCProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -59,9 +60,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-full flex flex-col`}
       >
-        <MainNav />
-        <main className="flex-grow">{children}</main>
-        <Footer />
+        <TRPCProvider>
+          <MainNav />
+          <main className="flex-grow">{children}</main>
+          <Footer />
+        </TRPCProvider>
       </body>
     </html>
   );

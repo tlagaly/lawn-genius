@@ -8,6 +8,7 @@ const navigation = [
   { name: "Overview", href: "/dashboard" },
   { name: "Lawn Profiles", href: "/dashboard/lawn" },
   { name: "Schedule", href: "/dashboard/schedule" },
+  { name: "Notifications", href: "/dashboard/notifications" },
   { name: "Settings", href: "/dashboard/settings" },
 ];
 

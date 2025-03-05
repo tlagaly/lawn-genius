@@ -9,37 +9,13 @@ import { api } from "@/lib/trpc/client";
 export default function RegisterForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
-    const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
-    const confirmPassword = formData.get("confirmPassword") as string;
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      // Create user through tRPC
-      await api.user.create.mutate({
-        name,
-        email,
-        password,
-      });
-
-      // Sign in the user
+  
+  const createUser = api.user.create.useMutation({
+    onSuccess: async (_, variables) => {
+      // Sign in the user after successful registration
       const result = await signIn("credentials", {
-        email,
-        password,
+        email: variables.email,
+        password: variables.password,
         redirect: false,
       });
 
@@ -50,15 +26,35 @@ export default function RegisterForm() {
 
       router.push("/dashboard");
       router.refresh();
-    } catch (error: any) {
+    },
+    onError: (error) => {
       setError(error.message || "An error occurred during registration");
-    } finally {
-      setIsLoading(false);
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
     }
+
+    createUser.mutate({
+      name,
+      email,
+      password,
+    });
   };
 
   const handleGoogleSignIn = () => {
-    setIsLoading(true);
     signIn("google", { callbackUrl: "/dashboard" });
   };
 
@@ -142,16 +138,16 @@ export default function RegisterForm() {
         <div className="space-y-4">
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={createUser.isLoading}
             className="group relative flex w-full justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
           >
-            {isLoading ? "Creating account..." : "Create account"}
+            {createUser.isLoading ? "Creating account..." : "Create account"}
           </button>
 
           <button
             type="button"
             onClick={handleGoogleSignIn}
-            disabled={isLoading}
+            disabled={createUser.isLoading}
             className="group relative flex w-full justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
           >
             <svg

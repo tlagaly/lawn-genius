@@ -3,6 +3,8 @@ import { appRouter } from '@/lib/trpc/root';
 import { createContext } from '@/lib/trpc/context';
 import { NextRequest } from 'next/server';
 import { TRPCError } from '@trpc/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/auth-options';
 
 const handler = (req: NextRequest) => {
   return fetchRequestHandler({
@@ -10,10 +12,10 @@ const handler = (req: NextRequest) => {
     req,
     router: appRouter,
     createContext: async () => {
-      const response = new Response();
+      const session = await getServerSession(authOptions);
       return createContext({
-        req: req as any,
-        res: response as any,
+        headers: req.headers,
+        session,
       });
     },
     onError:

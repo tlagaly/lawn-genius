@@ -25,11 +25,33 @@ model User {
   sessions      Session[]
   passwordResets PasswordReset[]
 
+  // Notification Preferences
+  emailNotifications Boolean @default(true)
+  pushNotifications Boolean @default(false)
+  pushSubscription  String? @db.Text // Web Push subscription data
+  alertThresholds   Json?   // Custom thresholds for different alert types
+  notifyFrequency   String  @default("immediate") // immediate, daily, weekly
+  monitoredConditions Json? // Which weather conditions to monitor
+
   // Profile & Subscription
   subscription  Subscription?
   lawnProfiles  LawnProfile[]
   schedules     Schedule[]
   payments      Payment[]
+  notifications Notification[]
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // weather, schedule, system
+  title     String
+  message   String   @db.Text
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Account {
@@ -122,16 +144,37 @@ model Treatment {
 }
 
 model WeatherAlert {
-  id            String    @id @default(cuid())
-  treatmentId   String
-  type          String    // temperature, wind, precipitation, conditions
-  severity      String    // warning, critical
-  message       String
-  suggestedDate DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  treatmentId       String
+  type              String    // temperature, wind, precipitation, conditions
+  severity          String    // warning, critical
+  message           String
+  suggestedDate     DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Notification tracking
+  emailSent         Boolean   @default(false)
+  emailSentAt       DateTime?
+  pushSent          Boolean   @default(false)
+  pushSentAt        DateTime?
+  readAt            DateTime?
+  actionTaken       String?   // dismissed, rescheduled, acknowledged
 
-  treatment     Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+  treatment         Treatment @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+  notifications     NotificationHistory[]
+}
+
+model NotificationHistory {
+  id            String    @id @default(cuid())
+  alertId       String
+  type          String    // email, push
+  status        String    // sent, failed, delivered, clicked
+  error         String?
+  sentAt        DateTime  @default(now())
+  deliveredAt   DateTime?
+  
+  alert         WeatherAlert @relation(fields: [alertId], references: [id], onDelete: Cascade)
 }
 
 model WeatherCondition {

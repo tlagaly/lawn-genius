@@ -4,6 +4,13 @@
 - Chose NextAuth.js for flexible authentication support
 - Implemented both email/password and OAuth strategies
 - Added password reset functionality for better user experience
+- Enhanced NextAuth implementation:
+  * Added dedicated API route for better organization
+  * Configured JWT strategy for session handling
+  * Set up custom callbacks for user data enrichment
+  * Integrated with Prisma adapter for database persistence
+  * Added proper error handling and redirection
+  * Implemented secure credential validation
 
 ## Database Design
 - Selected PostgreSQL for robust relational data management
@@ -14,11 +21,40 @@
 - Adopted TRPC for end-to-end type safety
 - Created modular router structure for scalability
 - Implemented protected procedures for secure data access
+- Enhanced user router with registration flow:
+  * Added user creation procedure with default preferences
+  * Integrated with authentication system
+  * Implemented proper tRPC hooks usage in forms
+
+## Notification System
+- Selected Resend for reliable email delivery
+- Implemented Web Push API for browser notifications
+- Designed comprehensive notification preferences:
+  * Email and push notification toggles
+  * Frequency settings (immediate/daily/weekly)
+  * Monitored conditions configuration
+  * Alert threshold customization
+- Created default notification settings for new users:
+  * Email notifications enabled by default
+  * Push notifications opt-in
+  * Daily notification frequency
+  * Empty monitored conditions list
+  * Default alert thresholds
+- Implemented notification history tracking:
+  * Persistent storage of sent notifications
+  * Delivery status tracking
+  * User interaction monitoring
+- Added service worker for push notification handling
+- Created VAPID key infrastructure for Web Push
 
 ## Frontend Architecture
 - Chose Next.js App Router for modern routing capabilities
 - Using React Server Components where applicable
 - Implemented client-side components for interactive features
+- Added TRPCProvider for global tRPC context:
+  * Configured with SuperJSON transformer
+  * Set up HTTP batch link
+  * Integrated with React Query
 
 ## Lawn Management
 - Structured lawn profiles for multiple lawn support
@@ -76,6 +112,15 @@
 - Unit tests for critical business logic
 - Integration tests for API endpoints
 - End-to-end testing for critical user flows
+- Added notification system testing:
+  * User registration with default preferences
+  * Email notification delivery verification
+  * Push notification subscription flow
+  * Notification history tracking
+  * Preference management testing
+  * Alert threshold validation
+  * Service worker functionality
+  * VAPID key infrastructure testing
 
 ## Deployment
 - Selected Vercel for production hosting

@@ -41,3 +41,7 @@ next-env.d.ts
 # IDE
 .vscode/
 .idea/
+
+# Cline configuration
+.clinerules-*
+.roomodes

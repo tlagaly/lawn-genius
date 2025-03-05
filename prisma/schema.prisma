@@ -23,6 +23,7 @@ model User {
   password      String?   // Hashed password for email/password auth
   accounts      Account[]
   sessions      Session[]
+  passwordResets PasswordReset[]
 
   // Profile & Subscription
   subscription  Subscription?
@@ -56,6 +57,15 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   // Hashed reset token
+  expires   DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model LawnProfile {

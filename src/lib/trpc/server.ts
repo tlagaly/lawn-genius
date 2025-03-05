@@ -23,4 +23,10 @@ export const api = {
       return caller.lawn.getById(id);
     },
   },
+  weather: {
+    testEmailNotification: async () => {
+      const caller = await createCaller();
+      return caller.weather.testEmailNotification();
+    },
+  },
 };

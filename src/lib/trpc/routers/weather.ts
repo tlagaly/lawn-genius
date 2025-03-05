@@ -3,6 +3,8 @@ import { publicProcedure, router } from '../trpc';
 import { weatherService } from '@/lib/weather';
 import { TRPCError } from '@trpc/server';
 import { TREATMENT_CONDITIONS } from '@/lib/weather/types';
+import { NotificationService } from '@/lib/notifications';
+import { prisma } from '@/lib/db/prisma';
 
 const locationSchema = z.object({
   latitude: z.number(),
@@ -214,6 +216,87 @@ export const weatherRouter = router({
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to stop weather monitoring',
+          cause: error
+        });
+      }
+    }),
+
+  testEmailNotification: publicProcedure
+    .mutation(async () => {
+      try {
+        // 1. Create a test user if not exists
+        const user = await prisma.user.upsert({
+          where: { email: 'test@example.com' },
+          update: {},
+          create: {
+            email: 'test@example.com',
+            emailNotifications: true,
+            notifyFrequency: 'immediate',
+            monitoredConditions: ['temperature', 'wind', 'precipitation', 'conditions']
+          }
+        });
+
+        // 2. Create a test lawn profile
+        const lawnProfile = await prisma.lawnProfile.create({
+          data: {
+            userId: user.id,
+            name: 'Test Lawn',
+            size: 1000,
+            grassType: 'Bermuda',
+            soilType: 'Loam',
+            sunExposure: 'Full Sun',
+            irrigation: true,
+            latitude: 30.2672,
+            longitude: -97.7431,
+            timezone: 'America/Chicago'
+          }
+        });
+
+        // 3. Create a test schedule
+        const schedule = await prisma.schedule.create({
+          data: {
+            userId: user.id,
+            lawnProfileId: lawnProfile.id,
+            name: 'Test Schedule',
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+          }
+        });
+
+        // 4. Create a test treatment
+        const treatment = await prisma.treatment.create({
+          data: {
+            scheduleId: schedule.id,
+            type: 'Fertilization',
+            date: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
+            weatherScore: 2 // Low score to trigger alert
+          }
+        });
+
+        // 5. Create a test weather alert
+        const alert = await prisma.weatherAlert.create({
+          data: {
+            treatmentId: treatment.id,
+            type: 'temperature',
+            severity: 'warning',
+            message: 'Test Alert: High temperature expected tomorrow',
+            suggestedDate: new Date(Date.now() + 48 * 60 * 60 * 1000), // Day after tomorrow
+          }
+        });
+
+        // 6. Send test notification
+        await NotificationService.sendEmailNotification(user.id, alert);
+
+        return {
+          success: true,
+          alertId: alert.id,
+          userId: user.id
+        };
+      } catch (error) {
+        console.error('Error sending test notification:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to send test notification',
           cause: error
         });
       }

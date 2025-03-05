@@ -25,21 +25,22 @@
    - Daily notification frequency
    - No weather conditions monitored
 
+5. Set up email notifications:
+   - Added Resend API key to environment variables
+   - Created test weather alert
+   - Successfully sent test email notification
+   - Verified delivery through notification history
+   - Added testEmailNotification endpoint for testing
+
 ## Current Status
 - Login functionality working correctly
 - Session handling fixed in tRPC routes
-- NotificationService implementation ready for testing
-- Resend integration needs to be set up for email notifications
+- NotificationService implementation tested and working
+- Email notifications successfully integrated with Resend
 - Push notifications require web-push package and VAPID keys
 
 ## Next Steps
-1. Test email notifications:
-   - Set up Resend API key in environment
-   - Create test weather alert
-   - Send test notification
-   - Verify delivery
-
-2. Test push notifications:
+1. Test push notifications:
    - Install web-push package
    - Generate VAPID keys
    - Implement service worker
@@ -47,7 +48,7 @@
    - Verify subscription
    - Send test push notification
 
-3. Test notification history:
+2. Test notification history:
    - Create test notifications
    - Verify they appear in history
    - Test mark as read functionality
@@ -58,3 +59,5 @@
 - Notification history is tracked in the database
 - Email template includes severity indicators and suggested reschedule dates
 - Push notifications will include icons and deep links to alerts
+- Added test endpoint at /test-notification for email notification testing
+- Email notifications successfully logged in NotificationHistory table

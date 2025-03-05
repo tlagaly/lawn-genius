@@ -55,10 +55,24 @@
 ## External Services Integration
 
 ### Email Service
-- Resend for transactional emails
-- Email template system
-- Delivery tracking
-- Email preference management
+- Resend for transactional emails:
+  * Configured with environment variables
+  * HTML email templates with severity indicators
+  * Suggested reschedule dates
+  * Delivery status tracking
+  * Error handling and logging
+- Email template system:
+  * Weather alert templates
+  * Severity-based formatting
+  * Action buttons for dashboard access
+- Delivery tracking:
+  * Success/failure logging
+  * Timestamp tracking
+  * Error message capture
+- Email preference management:
+  * Per-user notification settings
+  * Frequency control
+  * Condition-based filtering
 
 ### Push Notification Service
 - Web Push API integration

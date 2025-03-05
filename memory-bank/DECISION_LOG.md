@@ -27,7 +27,12 @@
   * Implemented proper tRPC hooks usage in forms
 
 ## Notification System
-- Selected Resend for reliable email delivery
+- Selected Resend for reliable email delivery:
+  * Integrated Resend API for transactional emails
+  * Created HTML email templates with severity indicators
+  * Added suggested reschedule dates in notifications
+  * Implemented delivery tracking and logging
+  * Created test endpoint for email verification
 - Implemented Web Push API for browser notifications
 - Designed comprehensive notification preferences:
   * Email and push notification toggles
@@ -44,6 +49,9 @@
   * Persistent storage of sent notifications
   * Delivery status tracking
   * User interaction monitoring
+  * Separate logging for email and push notifications
+  * Status tracking (sent, failed, delivered)
+  * Error logging for failed notifications
 - Added service worker for push notification handling
 - Created VAPID key infrastructure for Web Push
 

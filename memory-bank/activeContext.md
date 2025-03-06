@@ -63,6 +63,20 @@
    - Check responsive behavior
    - Validate error handling
 
+## Version Control Workflow
+- Repository: https://github.com/tlagaly/lawn-genius
+- Branch Strategy:
+  - Main branch for primary development
+  - Feature branches for major changes
+- Commit Guidelines:
+  - Use semantic commit messages (feat:, fix:, etc.)
+  - Include clear descriptions of changes
+  - Regular commits for trackable progress
+- Push Schedule:
+  - Push after significant feature completion
+  - Push at end of development sessions
+  - Push when implementing critical fixes
+
 ## Suggested Next Task Prompt
 "Let's continue implementing the grass species page by:
 1. Adding TooltipProvider to fix the tooltip error

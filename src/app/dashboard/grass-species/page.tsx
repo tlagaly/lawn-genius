@@ -1,26 +1,33 @@
 "use client";
 
 import { Suspense } from 'react';
-import { useSession } from 'next-auth/react';
-import { redirect } from 'next/navigation';
+import { ErrorBoundary } from 'react-error-boundary';
 import { SpeciesSelection } from '@/components/grass-species/SpeciesSelection';
 
+function LoadingSpinner() {
+  return (
+    <div className="flex justify-center items-center min-h-[50vh]">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+    </div>
+  );
+}
+
+function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) {
+  return (
+    <div className="text-center py-8">
+      <h2 className="text-xl font-semibold text-red-600 mb-4">Something went wrong</h2>
+      <p className="text-gray-600 mb-4">{error.message}</p>
+      <button
+        onClick={resetErrorBoundary}
+        className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 transition-colors"
+      >
+        Try again
+      </button>
+    </div>
+  );
+}
+
 export default function GrassSpeciesPage() {
-  const { status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      redirect('/auth/login?callbackUrl=/dashboard/grass-species');
-    },
-  });
-
-  if (status === "loading") {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
   const handleSpeciesSelect = (species: any) => {
     console.log('Selected species:', species);
     // This will be handled by the parent lawn profile form
@@ -40,17 +47,13 @@ export default function GrassSpeciesPage() {
         </div>
 
         {/* Species Selection Component */}
-        <Suspense
-          fallback={
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          }
-        >
-          <SpeciesSelection
-            onSpeciesSelect={handleSpeciesSelect}
-          />
-        </Suspense>
+        <ErrorBoundary FallbackComponent={ErrorFallback}>
+          <Suspense fallback={<LoadingSpinner />}>
+            <SpeciesSelection
+              onSpeciesSelect={handleSpeciesSelect}
+            />
+          </Suspense>
+        </ErrorBoundary>
 
         {/* Additional Information */}
         <div className="mt-12 bg-gray-50 rounded-lg p-6">

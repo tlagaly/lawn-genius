@@ -47,6 +47,11 @@ export interface GrassSpeciesMaintenance {
   aerationFrequency: string;
 }
 
+export interface GrassSpeciesImageDescriptions {
+  main?: string;
+  additional?: Record<string, string>;
+}
+
 export interface GrassSpecies {
   id: string;
   name: string;
@@ -56,6 +61,9 @@ export interface GrassSpecies {
   idealConditions: GrassSpeciesIdealConditions;
   maintenance: GrassSpeciesMaintenance;
   commonMixes: string[];
+  mainImage?: string;
+  images?: string[];
+  imageDescriptions?: GrassSpeciesImageDescriptions;
 }
 
 export interface SpeciesCardProps {

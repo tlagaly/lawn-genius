@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -13,6 +14,13 @@ const navigation = [
 
 export function MainNav() {
   const pathname = usePathname()
+  const { status } = useSession()
+
+  // Hide navigation only in dashboard when logged in
+  const isDashboard = pathname?.startsWith('/dashboard')
+  if (status === 'authenticated' && isDashboard) {
+    return null
+  }
 
   return (
     <nav className="bg-white shadow">

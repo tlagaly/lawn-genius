@@ -1,8 +1,19 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 
 export function Footer() {
+  const pathname = usePathname()
+  const { status } = useSession()
+
+  // Hide footer only in dashboard when logged in
+  const isDashboard = pathname?.startsWith('/dashboard')
+  if (status === 'authenticated' && isDashboard) {
+    return null
+  }
+
   return (
     <footer className="bg-gray-50">
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">

@@ -17,10 +17,10 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="flex min-h-full">
+      <div className="flex h-screen">
         {/* Sidebar */}
         <div className="hidden w-64 flex-shrink-0 border-r border-gray-200 bg-white lg:block">
-          <div className="flex h-full flex-col">
+          <div className="flex h-screen flex-col">
             {/* Logo */}
             <div className="flex h-16 items-center border-b border-gray-200 px-4">
               <span className="text-green-600 text-2xl font-bold">LG</span>

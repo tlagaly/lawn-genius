@@ -42,6 +42,12 @@ const grassSpeciesSchema = z.object({
     aerationFrequency: z.string(),
   }),
   commonMixes: z.array(z.string()),
+  mainImage: z.string().optional(),
+  images: z.array(z.string()).optional(),
+  imageDescriptions: z.object({
+    main: z.string().optional(),
+    additional: z.record(z.string()).optional(),
+  }).optional(),
 });
 
 export const grassSpeciesRouter = router({
@@ -76,7 +82,16 @@ export const grassSpeciesRouter = router({
         include: {
           treatments: {
             include: {
-              treatment: true,
+              treatment: {
+                select: {
+                  id: true,
+                  name: true,
+                  category: true,
+                  description: true,
+                  season: true,
+                  frequency: true,
+                },
+              },
             },
           },
           citations: true,
@@ -110,16 +125,30 @@ export const grassSpeciesRouter = router({
         }),
       };
 
-      return ctx.db.grassSpecies.findMany({
+      return ctx.prisma.grassSpecies.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          name: true,
+          scientificName: true,
+          type: true,
+          characteristics: true,
+          idealConditions: true,
+          maintenance: true,
+          commonMixes: true,
+          mainImage: true,
+          images: true,
+          imageDescriptions: true,
           treatments: {
             include: {
               treatment: {
                 select: {
+                  id: true,
                   name: true,
                   category: true,
-                  effectiveness: true,
+                  description: true,
+                  season: true,
+                  frequency: true,
                 },
               },
             },
@@ -132,7 +161,7 @@ export const grassSpeciesRouter = router({
   getRecommendedMixes: protectedProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
-      const species = await ctx.db.grassSpecies.findUnique({
+      const species = await ctx.prisma.grassSpecies.findUnique({
         where: { id: input },
         select: { commonMixes: true },
       });
@@ -144,7 +173,7 @@ export const grassSpeciesRouter = router({
         });
       }
 
-      return ctx.db.grassSpecies.findMany({
+      return ctx.prisma.grassSpecies.findMany({
         where: {
           name: {
             in: species.commonMixes,
@@ -157,7 +186,7 @@ export const grassSpeciesRouter = router({
   getEffectiveTreatments: protectedProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
-      return ctx.db.speciesTreatment.findMany({
+      return ctx.prisma.speciesTreatment.findMany({
         where: {
           speciesId: input,
           effectiveness: {

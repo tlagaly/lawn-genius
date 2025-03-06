@@ -99,6 +99,12 @@ model GrassSpecies {
   idealConditions   Json      // soil, climate, sun exposure
   maintenance       Json      // mowing height, water needs, etc.
   commonMixes       String[]  // species it commonly mixes well with
+  
+  // Image fields
+  mainImage         String?   // URL to primary species image
+  images            String[]  // Additional image URLs (growth stages, diseases, etc.)
+  imageDescriptions Json?     // Metadata for images (descriptions, categories, etc.)
+  
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 

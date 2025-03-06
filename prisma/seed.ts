@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { grassSpeciesData } from './seed-data/grass-species';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -10,6 +11,22 @@ async function main() {
     // Clear existing data
     await prisma.grassSpecies.deleteMany();
     console.log('Cleared existing grass species data');
+    
+    // Create test user
+    const hashedPassword = await bcrypt.hash('TestPassword123!', 10);
+    const testUser = await prisma.user.upsert({
+      where: { email: 'test@example.com' },
+      update: {},
+      create: {
+        email: 'test@example.com',
+        name: 'Test User',
+        password: hashedPassword,
+        emailNotifications: true,
+        pushNotifications: false,
+        notifyFrequency: 'immediate',
+      },
+    });
+    console.log(`Created/Updated test user: ${testUser.email}`);
     
     // Seed grass species
     for (const species of grassSpeciesData) {
@@ -22,6 +39,9 @@ async function main() {
           idealConditions: species.idealConditions,
           maintenance: species.maintenance,
           commonMixes: species.commonMixes,
+          mainImage: species.mainImage,
+          images: species.images,
+          imageDescriptions: species.imageDescriptions,
         },
       });
       console.log(`Created grass species: ${created.name}`);

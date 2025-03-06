@@ -9,10 +9,11 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
+    maxAge: process.env.NODE_ENV === "development" ? 30 * 24 * 60 * 60 : 24 * 60 * 60, // 30 days in dev, 24 hours in prod
   },
   pages: {
     signIn: "/auth/login",
-    signUp: "/auth/register",
+    newUser: "/auth/register",
     error: "/auth/error",
   },
   providers: [

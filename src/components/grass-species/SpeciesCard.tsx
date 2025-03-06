@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from 'react';
-import { Tooltip } from '@/components/ui/tooltip';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip } from '@/components/ui/tooltip';
+import { SpeciesImage } from './SpeciesImage';
 import type { SpeciesCardProps } from './types';
 
 export function SpeciesCard({ species, onSelect, selected }: SpeciesCardProps) {
@@ -15,6 +16,9 @@ export function SpeciesCard({ species, onSelect, selected }: SpeciesCardProps) {
     type,
     characteristics,
     maintenance,
+    mainImage,
+    images,
+    imageDescriptions
   } = species;
 
   const getToleranceLabel = (value: number) => {
@@ -47,10 +51,20 @@ export function SpeciesCard({ species, onSelect, selected }: SpeciesCardProps) {
       {/* Type Badge */}
       <Badge
         variant={type === 'cool-season' ? 'default' : 'secondary'}
-        className="absolute top-2 right-2"
+        className="absolute top-2 right-2 z-10"
       >
         {type}
       </Badge>
+
+      {/* Main Image */}
+      <div className="relative w-full h-48 mb-4 rounded-t overflow-hidden">
+        <SpeciesImage
+          src={mainImage}
+          alt={name}
+          description={imageDescriptions?.main}
+          priority
+        />
+      </div>
 
       {/* Species Name */}
       <div className="mb-3">
@@ -130,6 +144,29 @@ export function SpeciesCard({ species, onSelect, selected }: SpeciesCardProps) {
                   </div>
                 </div>
               </section>
+
+              {/* Image Gallery Section */}
+              {images && images.length > 0 && (
+                <section>
+                  <h3 className="text-lg font-semibold mb-3">Image Gallery</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {images.map((image, index) => {
+                      const imageName = image.split('/').pop()?.replace('.jpg', '');
+                      const description = imageName && imageDescriptions?.additional?.[imageName];
+                      
+                      return (
+                        <div key={image} className="relative h-40 rounded overflow-hidden">
+                          <SpeciesImage
+                            src={image}
+                            alt={`${name} - ${imageName}`}
+                            description={description}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
 
               {/* Maintenance Section */}
               <section>

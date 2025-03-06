@@ -38,6 +38,13 @@ type GrassSpeciesInput = {
     aerationFrequency: string;
   };
   commonMixes: string[];
+  // Image fields
+  mainImage?: string;
+  images?: string[];
+  imageDescriptions?: {
+    main?: string;
+    additional?: Record<string, string>;
+  };
 };
 
 export const grassSpeciesData: GrassSpeciesInput[] = [
@@ -80,7 +87,21 @@ export const grassSpeciesData: GrassSpeciesInput[] = [
       fertilizationFrequency: "3-4 times per year",
       aerationFrequency: "Annually"
     },
-    commonMixes: ["Fine Fescue", "Perennial Ryegrass"]
+    commonMixes: ["Fine Fescue", "Perennial Ryegrass"],
+    mainImage: "/images/grass-species/kentucky-bluegrass/main.jpg",
+    images: [
+      "/images/grass-species/kentucky-bluegrass/growth-stages.jpg",
+      "/images/grass-species/kentucky-bluegrass/texture.jpg",
+      "/images/grass-species/kentucky-bluegrass/disease-resistance.jpg"
+    ],
+    imageDescriptions: {
+      main: "Mature Kentucky Bluegrass showing characteristic blue-green color and fine texture",
+      additional: {
+        "growth-stages": "Different growth stages from germination to maturity",
+        "texture": "Close-up of leaf blade texture and venation",
+        "disease-resistance": "Comparison of disease-resistant varieties"
+      }
+    }
   },
   {
     name: "Tall Fescue",
@@ -121,7 +142,21 @@ export const grassSpeciesData: GrassSpeciesInput[] = [
       fertilizationFrequency: "2-3 times per year",
       aerationFrequency: "Annually"
     },
-    commonMixes: ["Kentucky Bluegrass", "Perennial Ryegrass"]
+    commonMixes: ["Kentucky Bluegrass", "Perennial Ryegrass"],
+    mainImage: "/images/grass-species/tall-fescue/main.jpg",
+    images: [
+      "/images/grass-species/tall-fescue/root-system.jpg",
+      "/images/grass-species/tall-fescue/drought-tolerance.jpg",
+      "/images/grass-species/tall-fescue/shade-performance.jpg"
+    ],
+    imageDescriptions: {
+      main: "Mature Tall Fescue showing characteristic coarse texture and deep green color",
+      additional: {
+        "root-system": "Deep root system development",
+        "drought-tolerance": "Performance under drought conditions",
+        "shade-performance": "Growth pattern in partial shade"
+      }
+    }
   },
   {
     name: "Bermuda Grass",
@@ -162,7 +197,21 @@ export const grassSpeciesData: GrassSpeciesInput[] = [
       fertilizationFrequency: "4-5 times per year",
       aerationFrequency: "Annually"
     },
-    commonMixes: ["Zoysia"]
+    commonMixes: ["Zoysia"],
+    mainImage: "/images/grass-species/bermuda/main.jpg",
+    images: [
+      "/images/grass-species/bermuda/stolons.jpg",
+      "/images/grass-species/bermuda/heat-tolerance.jpg",
+      "/images/grass-species/bermuda/recovery-rate.jpg"
+    ],
+    imageDescriptions: {
+      main: "Mature Bermuda grass showing dense growth pattern and fine texture",
+      additional: {
+        "stolons": "Stolon development and spreading pattern",
+        "heat-tolerance": "Performance in high temperature conditions",
+        "recovery-rate": "Recovery after heavy traffic or stress"
+      }
+    }
   },
   {
     name: "Zoysia Grass",
@@ -203,6 +252,20 @@ export const grassSpeciesData: GrassSpeciesInput[] = [
       fertilizationFrequency: "2-3 times per year",
       aerationFrequency: "Every 2-3 years"
     },
-    commonMixes: ["Bermuda Grass"]
+    commonMixes: ["Bermuda Grass"],
+    mainImage: "/images/grass-species/zoysia/main.jpg",
+    images: [
+      "/images/grass-species/zoysia/density.jpg",
+      "/images/grass-species/zoysia/shade-adaptation.jpg",
+      "/images/grass-species/zoysia/seasonal-color.jpg"
+    ],
+    imageDescriptions: {
+      main: "Mature Zoysia grass displaying dense growth and fine leaf texture",
+      additional: {
+        "density": "Close-up of characteristic dense growth pattern",
+        "shade-adaptation": "Growth performance in partial shade conditions",
+        "seasonal-color": "Color variations through different seasons"
+      }
+    }
   }
 ];

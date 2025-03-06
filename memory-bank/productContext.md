@@ -72,12 +72,25 @@
    - Profile information
    - Subscription status
    - Notification preferences
+   - Treatment goals
 
 2. Lawn Profile
-   - Characteristics
+   - Species composition
    - Location data
+   - Soil characteristics
    - Treatment history
    - Weather preferences
+   - Current conditions
+   - Target conditions
+
+3. Grass Species
+   - Scientific classification
+   - Growth characteristics
+   - Ideal conditions
+   - Common mixes
+   - Maintenance requirements
+   - Regional suitability
+   - Evidence-based care guidelines
 
 3. Schedule
    - Treatments
@@ -85,11 +98,25 @@
    - Weather conditions
    - Completion status
 
-4. Treatment
-   - Type information
-   - Application details
+4. Treatment System
+   - Type categorization
+   - Species-specific protocols
+   - Evidence-based methodologies
+   - Application guidelines
    - Weather requirements
    - Effectiveness tracking
+   - Research citations
+   - Success metrics
+   - Interaction analysis
+   - Historical performance
+
+5. Treatment Plans
+   - Goal-based recommendations
+   - Species-specific adjustments
+   - Evidence-backed strategies
+   - Progress tracking
+   - Outcome prediction
+   - Adaptation rules
 
 5. Weather Alert
    - Conditions
@@ -154,6 +181,32 @@
 - API protection
 - Input validation
 - Rate limiting
+
+## Evidence-Based System
+
+### Research Integration
+- Academic research database
+- Agricultural extension services
+- Field study results
+- Success rate tracking
+- Regional adaptation data
+- Climate zone correlations
+
+### Treatment Knowledge Base
+- Species-specific care guides
+- Mixed lawn management
+- Regional best practices
+- Seasonal considerations
+- Problem resolution protocols
+- Success case studies
+
+### Data-Driven Decision Making
+- Treatment effectiveness analysis
+- Species interaction tracking
+- Climate impact correlation
+- Soil type optimization
+- Success rate prediction
+- Continuous learning system
 
 ## Performance Optimizations
 - SSR/SSG usage

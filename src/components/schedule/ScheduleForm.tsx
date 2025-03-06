@@ -8,6 +8,31 @@ import { type inferRouterOutputs } from '@trpc/server';
 import { type TRPCClientErrorLike } from '@trpc/client';
 import { z } from 'zod';
 import { TREATMENT_CONDITIONS } from '@/lib/weather/types';
+import { RecurrencePatternForm } from './RecurrencePatternForm';
+import { type RecurrencePatternInput } from '@/lib/utils/recurrence';
+
+function transformRecurrencePattern(pattern: RecurrencePatternInput) {
+  const transformed = {
+    frequency: pattern.frequency,
+    interval: pattern.interval,
+    endType: pattern.endType,
+    weekdays: pattern.weekdays?.length ? pattern.weekdays : undefined,
+    monthDay: pattern.monthDay ?? undefined,
+    endDate: pattern.endDate ?? undefined,
+    occurrences: pattern.occurrences ?? undefined,
+  };
+
+  // Type assertion to match the API schema
+  return transformed as {
+    frequency: "daily" | "weekly" | "monthly";
+    interval: number;
+    endType: "never" | "after_occurrences" | "on_date";
+    endDate?: Date;
+    weekdays?: number[];
+    monthDay?: number;
+    occurrences?: number;
+  };
+}
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
 type LawnProfile = RouterOutputs['lawn']['getAll'][0];
@@ -25,6 +50,8 @@ interface Schedule {
   startDate: Date;
   endDate?: Date;
   treatments: Treatment[];
+  isRecurring?: boolean;
+  recurrencePattern?: RecurrencePatternInput;
 }
 
 interface ScheduleFormProps {
@@ -37,6 +64,8 @@ interface WeatherRecommendation {
   score: number;
   recommendations: string[];
 }
+
+type UpdateMode = 'single' | 'future' | 'all';
 
 export function ScheduleForm({ initialData, lawnProfileId }: ScheduleFormProps) {
   const router = useRouter();
@@ -76,6 +105,31 @@ export function ScheduleForm({ initialData, lawnProfileId }: ScheduleFormProps) 
     startDate: initialData?.startDate || new Date(),
     endDate: initialData?.endDate,
     treatments: initialData?.treatments || [],
+    isRecurring: initialData?.isRecurring || false,
+    recurrencePattern: initialData?.recurrencePattern,
+  });
+
+  const [updateMode, setUpdateMode] = useState<UpdateMode>('all');
+  const [recurrenceErrors, setRecurrenceErrors] = useState<string[]>([]);
+
+  const createRecurringSchedule = api.recurringSchedule.create.useMutation({
+    onSuccess: () => {
+      router.push('/dashboard/schedule');
+      router.refresh();
+    },
+    onError: (error: TRPCClientErrorLike<any>) => {
+      setError(error.message);
+    },
+  });
+
+  const updateRecurringSchedule = api.recurringSchedule.update.useMutation({
+    onSuccess: () => {
+      router.push('/dashboard/schedule');
+      router.refresh();
+    },
+    onError: (error: TRPCClientErrorLike<any>) => {
+      setError(error.message);
+    },
   });
 
   const treatmentTypes = Object.keys(TREATMENT_CONDITIONS);
@@ -144,25 +198,56 @@ export function ScheduleForm({ initialData, lawnProfileId }: ScheduleFormProps) 
     setError('');
 
     try {
-      if (initialData) {
-        await updateSchedule.mutateAsync({
-          id: initialData.id,
-          data: {
+      if (formData.isRecurring && formData.recurrencePattern) {
+        // Handle recurring schedule
+        if (initialData) {
+          await updateRecurringSchedule.mutateAsync({
+            id: initialData.id,
+            data: {
+              name: formData.name,
+              lawnProfileId: formData.lawnProfileId,
+              startDate: formData.startDate,
+              endDate: formData.endDate,
+              treatments: formData.treatments,
+              recurrencePattern: {
+                ...formData.recurrencePattern!,
+                endDate: formData.recurrencePattern?.endDate || undefined,
+              },
+            },
+            updateMode,
+          });
+        } else {
+          await createRecurringSchedule.mutateAsync({
             name: formData.name,
             lawnProfileId: formData.lawnProfileId,
             startDate: formData.startDate,
             endDate: formData.endDate,
             treatments: formData.treatments,
-          },
-        });
+            recurrencePattern: formData.recurrencePattern,
+          });
+        }
       } else {
-        await createSchedule.mutateAsync({
-          name: formData.name,
-          lawnProfileId: formData.lawnProfileId,
-          startDate: formData.startDate,
-          endDate: formData.endDate,
-          treatments: formData.treatments,
-        });
+        // Handle non-recurring schedule
+        if (initialData) {
+          await updateSchedule.mutateAsync({
+            id: initialData.id,
+            data: {
+              name: formData.name,
+              lawnProfileId: formData.lawnProfileId,
+              startDate: formData.startDate,
+              endDate: formData.endDate,
+              treatments: formData.treatments,
+            },
+          });
+        } else {
+          await createSchedule.mutateAsync({
+            name: formData.name,
+            lawnProfileId: formData.lawnProfileId,
+            startDate: formData.startDate,
+            endDate: formData.endDate,
+            treatments: formData.treatments,
+          });
+        }
       }
     } catch (err) {
       setError('Failed to save schedule');

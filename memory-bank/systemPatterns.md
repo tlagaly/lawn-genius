@@ -31,6 +31,118 @@ src/
 ## Component Patterns
 
 ### Component Structure
+
+## TypeScript Patterns
+
+### Type Definition Best Practices
+```typescript
+// Prefer undefined over null for optional values
+interface GoodPattern {
+  optionalField?: string;    // ✓ Use undefined
+  arrayField?: string[];     // ✓ Optional array
+}
+
+interface AvoidPattern {
+  optionalField: string | null;  // ✗ Avoid null
+  arrayField: string[] | null;   // ✗ Avoid null arrays
+}
+```
+
+### State Updates with TypeScript
+```typescript
+// Explicit return types for state updates
+const [state, setState] = useState<MyType>();
+
+// Good: Explicit type annotation
+setState((prev): MyType => ({
+  ...prev,
+  field: newValue
+}));
+
+// Avoid: Implicit return type
+setState(prev => ({
+  ...prev,
+  field: newValue
+}));
+```
+
+### API Contract Alignment
+```typescript
+// Define API types first, then implement
+export interface ApiContract {
+  input: {
+    field: string;
+    optionalField?: string; // Use undefined consistently
+  };
+  output: {
+    result: string;
+  };
+}
+
+// Frontend and backend share types
+const apiCall = async (input: ApiContract['input']): Promise<ApiContract['output']> => {
+  // Implementation
+};
+```
+
+### Type Safety Guidelines
+1. API Contract First
+   - Define shared types between frontend and backend
+   - Use consistent nullability (prefer undefined)
+   - Document breaking changes
+   - Validate types at API boundaries
+
+2. State Management
+   - Use explicit type annotations in state updates
+   - Define clear interfaces for component state
+   - Avoid type assertions unless absolutely necessary
+   - Document any type assertions with comments
+
+3. Component Design
+   - Consider type requirements during design phase
+   - Create reusable type utilities
+   - Keep type definitions close to usage
+   - Use strict TypeScript configuration
+
+4. Type Transformations
+   - Create utility functions for common transformations
+   - Handle nullable values consistently
+   - Validate data at boundaries
+   - Use type guards for runtime safety
+
+5. Error Prevention
+   - Review type definitions during code review
+   - Use strict null checks
+   - Document type expectations
+   - Write type-safe utility functions
+
+### Common Pitfalls
+```typescript
+// Avoid mixing null and undefined
+// ✗ Bad
+type Inconsistent = {
+  field1: string | null;
+  field2?: string;
+}
+
+// ✓ Good
+type Consistent = {
+  field1?: string;
+  field2?: string;
+}
+
+// Avoid type assertions without validation
+// ✗ Bad
+const data = someData as MyType;
+
+// ✓ Good
+function isMyType(data: unknown): data is MyType {
+  // Validation logic
+  return true;
+}
+const data = validateMyType(someData);
+```
+
 ```typescript
 // Imports grouped by type
 import { type dependencies } from 'external'
@@ -220,6 +332,113 @@ export function handleServerError(error: unknown): ApiError {
   return {
     code: 'INTERNAL_SERVER_ERROR',
     message: 'An unexpected error occurred'
+  }
+}
+```
+
+## Scheduling Patterns
+
+### Recurring Schedule Structure
+```typescript
+interface RecurringSchedule {
+  pattern: {
+    frequency: 'daily' | 'weekly' | 'monthly'
+    interval: number
+    weekdays?: number[]
+    monthDay?: number
+    endType: 'never' | 'after_occurrences' | 'on_date'
+    occurrences?: number
+    endDate?: Date
+  }
+  exceptions: {
+    originalDate: Date
+    newDate?: Date
+    isCancelled: boolean
+  }[]
+}
+```
+
+### Pattern Generation
+```typescript
+function generateOccurrences(pattern: RecurringPattern, startDate: Date, endDate: Date): Date[] {
+  // Implementation based on frequency
+  switch (pattern.frequency) {
+    case 'daily':
+      return generateDailyOccurrences(pattern, startDate, endDate)
+    case 'weekly':
+      return generateWeeklyOccurrences(pattern, startDate, endDate)
+    case 'monthly':
+      return generateMonthlyOccurrences(pattern, startDate, endDate)
+  }
+}
+```
+
+### Exception Handling
+```typescript
+function applyExceptions(dates: Date[], exceptions: RecurrenceException[]): Date[] {
+  return dates.map(date => {
+    const exception = findException(date, exceptions)
+    if (!exception) return date
+    if (exception.isCancelled) return null
+    return exception.newDate
+  }).filter(Boolean)
+}
+```
+
+## Weather Integration Patterns
+
+### Weather Check Structure
+```typescript
+interface WeatherCheck {
+  date: Date
+  location: {
+    latitude: number
+    longitude: number
+    timezone: string
+  }
+  conditions: {
+    temperature: number
+    humidity: number
+    precipitation: number
+    windSpeed: number
+  }
+  treatmentType: string
+}
+```
+
+### Weather Optimization
+```typescript
+function optimizeSchedule(schedule: Schedule, weatherData: WeatherData[]): Schedule {
+  return {
+    ...schedule,
+    treatments: schedule.treatments.map(treatment => {
+      const weather = findWeatherForDate(treatment.date, weatherData)
+      const score = calculateWeatherScore(weather, treatment.type)
+      
+      if (score < WEATHER_THRESHOLD) {
+        return findAlternativeDate(treatment, weatherData)
+      }
+      return treatment
+    })
+  }
+}
+```
+
+### Weather Monitoring
+```typescript
+function monitorWeatherConditions(schedule: Schedule): void {
+  // Monitor upcoming treatments
+  schedule.treatments.forEach(treatment => {
+    if (isUpcoming(treatment.date)) {
+      startWeatherMonitoring(treatment)
+    }
+  })
+}
+
+function handleWeatherAlert(alert: WeatherAlert): void {
+  if (alert.severity === 'critical') {
+    createException(alert.treatmentId, alert.suggestedDate)
+    notifyUser(alert)
   }
 }
 ```

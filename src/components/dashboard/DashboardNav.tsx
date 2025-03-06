@@ -7,6 +7,7 @@ import { signOut } from "next-auth/react";
 const navigation = [
   { name: "Overview", href: "/dashboard" },
   { name: "Lawn Profiles", href: "/dashboard/lawn" },
+  { name: "Grass Species", href: "/dashboard/grass-species" },
   { name: "Schedule", href: "/dashboard/schedule" },
   { name: "Notifications", href: "/dashboard/notifications" },
   { name: "Settings", href: "/dashboard/settings" },

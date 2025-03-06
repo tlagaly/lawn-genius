@@ -90,12 +90,29 @@ model PasswordReset {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model GrassSpecies {
+  id                String    @id @default(cuid())
+  name              String    // e.g. "Kentucky Bluegrass"
+  scientificName    String    // e.g. "Poa pratensis"
+  type              String    // cool-season, warm-season
+  characteristics   Json      // growth patterns, appearance, etc.
+  idealConditions   Json      // soil, climate, sun exposure
+  maintenance       Json      // mowing height, water needs, etc.
+  commonMixes       String[]  // species it commonly mixes well with
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  lawnProfiles      LawnGrassComposition[]
+  treatments        SpeciesTreatment[]
+  citations         ResearchCitation[]
+}
+
 model LawnProfile {
   id            String    @id @default(cuid())
   userId        String
   name          String    // e.g. "Front Yard", "Back Yard"
   size          Float     // Size in square feet
-  grassType     String    // e.g. "Bermuda", "Kentucky Bluegrass"
   soilType      String    // e.g. "Clay", "Sandy", "Loam"
   sunExposure   String    // e.g. "Full Sun", "Partial Shade", "Full Shade"
   irrigation    Boolean   // Has irrigation system
@@ -106,40 +123,157 @@ model LawnProfile {
   timezone      String?   // Local timezone for accurate scheduling
   notes         String?   @db.Text
 
+  // Relations
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   schedules     Schedule[]
+  grassComposition LawnGrassComposition[]
 }
 
-model Schedule {
+model LawnGrassComposition {
   id            String    @id @default(cuid())
-  userId        String
   lawnProfileId String
-  name          String
-  startDate     DateTime
-  endDate       DateTime?
+  speciesId     String
+  percentage    Int       // composition percentage
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lawnProfile   LawnProfile @relation(fields: [lawnProfileId], references: [id], onDelete: Cascade)
-  treatments    Treatment[]
+  lawnProfile   LawnProfile   @relation(fields: [lawnProfileId], references: [id], onDelete: Cascade)
+  species       GrassSpecies  @relation(fields: [speciesId], references: [id], onDelete: Cascade)
+
+  @@unique([lawnProfileId, speciesId])
 }
 
-model Treatment {
+model TreatmentType {
+  id            String    @id @default(cuid())
+  name          String
+  category      String    // fertilization, weed control, seeding, etc.
+  description   String    @db.Text
+  season        String[]  // spring, summer, fall, winter
+  frequency     String    // once, monthly, seasonal, annual
+  goals         String[]  // thicker grass, weed reduction, etc.
+  conditions    Json      // required conditions for treatment
+  instructions  String    @db.Text
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  treatments        Treatment[]
+  speciesTreatments SpeciesTreatment[]
+  citations         ResearchCitation[]
+}
+
+model SpeciesTreatment {
+  id            String    @id @default(cuid())
+  speciesId     String
+  treatmentId   String
+  effectiveness Int       // 1-5 rating
+  notes         String?   @db.Text
+  evidence      Json      // research citations, success rates
+  conditions    Json      // specific conditions for effectiveness
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  species       GrassSpecies    @relation(fields: [speciesId], references: [id], onDelete: Cascade)
+  treatment     TreatmentType   @relation(fields: [treatmentId], references: [id], onDelete: Cascade)
+
+  @@unique([speciesId, treatmentId])
+}
+
+model ResearchCitation {
+  id            String    @id @default(cuid())
+  title         String
+  authors       String[]
+  publication   String?
+  year          Int
+  doi           String?   // Digital Object Identifier
+  url           String?
+  summary       String    @db.Text
+  methodology   String    @db.Text
+  findings      Json
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  species       GrassSpecies[]
+  treatments    TreatmentType[]
+}
+
+model Schedule {
   id              String    @id @default(cuid())
-  scheduleId      String
-  type            String    // e.g. "Fertilization", "Weed Control", "Mowing"
-  date            DateTime
-  completed       Boolean   @default(false)
-  effectiveness   Int?      // Scale of 1-5
-  weatherScore    Int?      // Weather suitability score 1-5
-  actualDuration  Int?      // Actual duration in minutes
-  notes           String?   @db.Text
+  userId          String
+  lawnProfileId   String
+  name            String
+  startDate       DateTime
+  endDate         DateTime?
+  isRecurring     Boolean   @default(false)
+  parentScheduleId String?  // For recurring schedule instances
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  schedule        Schedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  weatherData     WeatherCondition?
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lawnProfile     LawnProfile @relation(fields: [lawnProfileId], references: [id], onDelete: Cascade)
+  treatments      Treatment[]
+  recurrencePattern RecurrencePattern? @relation("ScheduleRecurrence")
+  parentSchedule  Schedule?   @relation("RecurringSchedules", fields: [parentScheduleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  childSchedules  Schedule[]  @relation("RecurringSchedules")
+}
+
+model RecurrencePattern {
+  id            String    @id @default(cuid())
+  scheduleId    String    @unique
+  frequency     String    // daily, weekly, monthly
+  interval      Int       // every X days/weeks/months
+  weekdays      Json?     // [1,3,5] for Mon,Wed,Fri
+  monthDay      Int?      // day of month for monthly
+  endType       String    // never, after_occurrences, on_date
+  occurrences   Int?      // if endType is after_occurrences
+  endDate       DateTime? // if endType is on_date
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  schedule      Schedule  @relation("ScheduleRecurrence", fields: [scheduleId], references: [id], onDelete: Cascade)
+  exceptions    RecurrenceException[]
+}
+
+model RecurrenceException {
+  id                  String    @id @default(cuid())
+  recurrencePatternId String
+  originalDate        DateTime
+  newDate            DateTime?
+  isCancelled        Boolean   @default(false)
+  reason             String?   @db.Text
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  recurrencePattern   RecurrencePattern @relation(fields: [recurrencePatternId], references: [id], onDelete: Cascade)
+}
+model Treatment {
+  id                String    @id @default(cuid())
+  scheduleId        String
+  treatmentTypeId   String
+  date              DateTime
+  completed         Boolean   @default(false)
+  
+  // Basic tracking
+  actualDuration    Int?      // Actual duration in minutes
+  notes             String?   @db.Text
+  
+  // Evidence-based effectiveness tracking
+  effectiveness     Int?      // Overall effectiveness (1-5)
+  speciesResults    Json?     // Per-species effectiveness tracking
+  conditionsScore   Int?      // How well conditions matched recommendations (1-5)
+  adherenceScore    Int?      // How well treatment followed guidelines (1-5)
+  weatherScore      Int?      // Weather suitability score (1-5)
+  resultMetrics     Json?     // Measured results (e.g., grass density, weed count)
+  
+  // Timestamps
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  schedule          Schedule      @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  treatmentType     TreatmentType @relation(fields: [treatmentTypeId], references: [id])
+  weatherData       WeatherCondition?
   weatherAlerts   WeatherAlert[]
 }
 

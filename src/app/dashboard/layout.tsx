@@ -22,12 +22,12 @@ export default async function DashboardLayout({
         <div className="hidden w-64 flex-shrink-0 border-r border-gray-200 bg-white lg:block">
           <div className="flex h-screen flex-col">
             {/* Logo */}
-            <div className="flex h-16 items-center border-b border-gray-200 px-4">
+            <Link href="/" className="flex h-16 items-center border-b border-gray-200 px-4 hover:bg-gray-50">
               <span className="text-green-600 text-2xl font-bold">LG</span>
               <span className="ml-2 text-lg font-semibold text-gray-900">
                 Lawn Genius
               </span>
-            </div>
+            </Link>
 
             {/* Navigation */}
             <div className="flex flex-1 flex-col overflow-y-auto p-4">

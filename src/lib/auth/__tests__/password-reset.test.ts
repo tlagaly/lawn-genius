@@ -1,154 +1,201 @@
-import { prisma } from '@/lib/db/__tests__/test-client';
-import { createTestUser, TEST_USER, clearTestUser, mockPasswordResetToken, waitForDb, forceCleanup } from './utils';
+import { mockDeep, mockReset, DeepMockProxy } from 'jest-mock-extended';
+import { PrismaClient, Prisma, User, PasswordReset } from '@prisma/client';
 import { hash } from 'bcrypt';
+import { mockSendEmail } from '@/lib/email/send-email';
+import {
+  generateResetToken,
+  sendResetEmail,
+  validateResetToken,
+  resetPassword
+} from '../password-reset';
+import { TRPCError } from '@trpc/server';
+
+// Mock prisma
+jest.mock('@/lib/db/client', () => ({
+  prisma: mockDeep<PrismaClient>()
+}));
+
+// Mock process.env
+const originalEnv = process.env;
+beforeEach(() => {
+  jest.resetModules();
+  process.env = { ...originalEnv };
+});
+afterAll(() => {
+  process.env = originalEnv;
+});
+
+import { prisma } from '@/lib/db/client';
+const mockPrisma = prisma as unknown as DeepMockProxy<PrismaClient>;
 
 describe('Password Reset Flow', () => {
-  beforeAll(async () => {
-    await forceCleanup();
-    await waitForDb();
-  });
+  // Define test data types
+  type MockUser = Pick<User, 'id' | 'email' | 'password'>;
+  type MockPasswordReset = Pick<PasswordReset, 'id' | 'token' | 'userId' | 'expires' | 'createdAt'>;
+  type MockPasswordResetWithUser = MockPasswordReset & { user: MockUser };
 
-  beforeEach(async () => {
-    await clearTestUser();
-    await waitForDb();
-  });
+  const mockUser: MockUser = {
+    id: 'user-123',
+    email: 'test@example.com',
+    password: 'hashedPassword'
+  };
 
-  afterAll(async () => {
-    await forceCleanup();
-    await prisma.$disconnect();
+  const mockToken: MockPasswordReset = {
+    id: 'token-123',
+    token: 'validToken',
+    userId: mockUser.id,
+    expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    createdAt: new Date()
+  };
+
+  beforeEach(() => {
+    mockReset(mockPrisma);
+    jest.clearAllMocks();
+
+    // Setup default transaction mock with proper typing
+    mockPrisma.$transaction.mockImplementation(async (
+      args: Array<Prisma.PrismaPromise<any>> | ((prisma: Omit<PrismaClient, '$transaction'>) => Promise<any>)
+    ) => {
+      if (typeof args === 'function') {
+        return args(mockPrisma);
+      }
+      return args;
+    });
   });
 
   describe('Token Generation', () => {
-    it('should create password reset token', async () => {
-      const user = await createTestUser();
-      expect(user).toBeDefined();
+    it('should generate reset token and expire old tokens', async () => {
+      const result = await generateResetToken(mockUser.id);
 
-      const resetToken = await prisma.$transaction(async (tx) => {
-        return tx.passwordReset.create({
-          data: {
-            userId: user.id,
-            token: await hash(mockPasswordResetToken.token, 10),
-            expires: mockPasswordResetToken.expires,
-          },
-        });
+      expect(result).toHaveProperty('token');
+      expect(result).toHaveProperty('expires');
+      expect(mockPrisma.passwordReset.deleteMany).toHaveBeenCalledWith({
+        where: { userId: mockUser.id }
       });
-
-      expect(resetToken).toBeDefined();
-      expect(resetToken.userId).toBe(user.id);
-      expect(resetToken.expires).toEqual(mockPasswordResetToken.expires);
+      expect(mockPrisma.passwordReset.create).toHaveBeenCalled();
     });
 
-    it('should expire old tokens when creating new one', async () => {
-      const user = await createTestUser();
-      expect(user).toBeDefined();
+    it('should handle transaction errors', async () => {
+      mockPrisma.$transaction.mockRejectedValue(new Error('Database error'));
 
-      await prisma.$transaction(async (tx) => {
-        // Create first token
-        const token1 = await tx.passwordReset.create({
-          data: {
-            userId: user.id,
-            token: await hash(mockPasswordResetToken.token, 10),
-            expires: mockPasswordResetToken.expires,
-          },
-        });
+      await expect(generateResetToken(mockUser.id)).rejects.toThrow('Database error');
+    });
+  });
 
-        // Create second token
-        const token2 = await tx.passwordReset.create({
-          data: {
-            userId: user.id,
-            token: await hash('new-token', 10),
-            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-          },
-        });
+  describe('Email Sending', () => {
+    const testEmail = 'test@example.com';
+    const testToken = 'test-token';
 
-        // Delete first token
-        await tx.passwordReset.delete({
-          where: { id: token1.id },
-        });
+    beforeEach(() => {
+      process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000';
+    });
 
-        // Verify second token exists
-        const newToken = await tx.passwordReset.findUnique({
-          where: { id: token2.id },
-        });
-        expect(newToken).toBeDefined();
-      });
+    it('should skip email sending in test environment', async () => {
+      process.env = {
+        ...process.env,
+        NODE_ENV: 'test'
+      };
+      await sendResetEmail(testEmail, testToken);
+      expect(mockSendEmail).not.toHaveBeenCalled();
+    });
+
+    it('should send reset email in non-test environment', async () => {
+      process.env = {
+        ...process.env,
+        NODE_ENV: 'development'
+      };
+      await sendResetEmail(testEmail, testToken);
+      expect(mockSendEmail).toHaveBeenCalledWith(expect.objectContaining({
+        to: testEmail,
+        subject: 'Reset Your Password'
+      }));
+    });
+
+    it('should handle email sending errors', async () => {
+      process.env = {
+        ...process.env,
+        NODE_ENV: 'development'
+      };
+      mockSendEmail.mockRejectedValue(new Error('Email error'));
+
+      await expect(sendResetEmail(testEmail, testToken))
+        .rejects
+        .toThrow(TRPCError);
+    });
+  });
+
+  describe('Token Validation', () => {
+    it('should validate valid token', async () => {
+      const hashedToken = await hash('validToken', 10);
+      const mockResetWithUser: MockPasswordResetWithUser = {
+        ...mockToken,
+        token: hashedToken,
+        user: mockUser
+      };
+      mockPrisma.passwordReset.findFirst.mockResolvedValue(mockResetWithUser as any);
+
+      const userId = await validateResetToken('validToken');
+      expect(userId).toBe(mockUser.id);
+    });
+
+    it('should reject expired token', async () => {
+      const expiredToken: MockPasswordReset = {
+        ...mockToken,
+        expires: new Date(Date.now() - 1000) // Expired
+      };
+      mockPrisma.passwordReset.findFirst.mockResolvedValue(expiredToken as any);
+
+      await expect(validateResetToken('validToken'))
+        .rejects
+        .toThrow('Invalid or expired reset token');
+    });
+
+    it('should reject invalid token', async () => {
+      const hashedToken = await hash('validToken', 10);
+      const tokenRecord: MockPasswordReset = {
+        ...mockToken,
+        token: hashedToken
+      };
+      mockPrisma.passwordReset.findFirst.mockResolvedValue(tokenRecord as any);
+
+      await expect(validateResetToken('invalidToken'))
+        .rejects
+        .toThrow('Invalid reset token');
+    });
+
+    it('should handle non-existent token', async () => {
+      mockPrisma.passwordReset.findFirst.mockResolvedValue(null);
+
+      await expect(validateResetToken('nonexistentToken'))
+        .rejects
+        .toThrow('Invalid or expired reset token');
     });
   });
 
   describe('Password Reset', () => {
-    let userId: string;
-    let resetToken: any;
+    const newPassword = 'newPassword123';
 
-    beforeEach(async () => {
-      const user = await createTestUser();
-      userId = user.id;
+    it('should reset password and delete token', async () => {
+      await resetPassword(mockUser.id, newPassword);
 
-      resetToken = await prisma.$transaction(async (tx) => {
-        return tx.passwordReset.create({
-          data: {
-            userId,
-            token: await hash(mockPasswordResetToken.token, 10),
-            expires: mockPasswordResetToken.expires,
-          },
-        });
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: mockUser.id },
+        data: expect.objectContaining({
+          password: expect.any(String)
+        })
+      });
+
+      expect(mockPrisma.passwordReset.deleteMany).toHaveBeenCalledWith({
+        where: { userId: mockUser.id }
       });
     });
 
-    it('should update password with valid token', async () => {
-      const newPassword = 'NewPassword123!';
-      
-      await prisma.$transaction(async (tx) => {
-        // Update password
-        await tx.user.update({
-          where: { id: userId },
-          data: { password: await hash(newPassword, 10) },
-        });
+    it('should handle transaction errors during reset', async () => {
+      mockPrisma.$transaction.mockRejectedValue(new Error('Database error'));
 
-        // Delete used token
-        await tx.passwordReset.delete({
-          where: { id: resetToken.id },
-        });
-
-        // Verify password was updated
-        const user = await tx.user.findUnique({
-          where: { id: userId },
-        });
-        expect(user).toBeDefined();
-        expect(user!.password).not.toBe(TEST_USER.password);
-
-        // Verify token was deleted
-        const deletedToken = await tx.passwordReset.findUnique({
-          where: { id: resetToken.id },
-        });
-        expect(deletedToken).toBeNull();
-      });
-    });
-
-    it('should reject expired token', async () => {
-      // Create expired token
-      const expiredToken = await prisma.$transaction(async (tx) => {
-        return tx.passwordReset.create({
-          data: {
-            userId,
-            token: await hash('expired-token', 10),
-            expires: new Date(Date.now() - 24 * 60 * 60 * 1000), // Expired 24 hours ago
-          },
-        });
-      });
-
-      // Attempt to use expired token
-      const isValid = expiredToken.expires > new Date();
-      expect(isValid).toBe(false);
-    });
-
-    it('should reject invalid token', async () => {
-      // Attempt to find token that doesn't exist
-      const invalidToken = await prisma.passwordReset.findFirst({
-        where: {
-          token: await hash('invalid-token', 10),
-        },
-      });
-      expect(invalidToken).toBeNull();
+      await expect(resetPassword(mockUser.id, newPassword))
+        .rejects
+        .toThrow('Database error');
     });
   });
 });

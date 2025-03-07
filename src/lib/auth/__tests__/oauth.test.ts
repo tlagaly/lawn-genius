@@ -191,6 +191,83 @@ describe('OAuth Authentication', () => {
 
         await expect(signIn('google')).rejects.toThrow('Too Many Requests');
       });
+
+      it('should handle OAuth callback errors', async () => {
+        signIn.mockImplementationOnce(() => ({
+          error: 'access_denied',
+          ok: false,
+          status: 401,
+          url: null,
+        }));
+
+        const result = await signIn('google');
+        expect(result.error).toBe('access_denied');
+        expect(result.ok).toBe(false);
+      });
+
+      it('should handle invalid state parameter', async () => {
+        signIn.mockImplementationOnce(() => ({
+          error: 'invalid_state',
+          ok: false,
+          status: 400,
+          url: null,
+        }));
+
+        const result = await signIn('google');
+        expect(result.error).toBe('invalid_state');
+        expect(result.status).toBe(400);
+      });
+
+      it('should handle token refresh failures', async () => {
+        const { user } = await factory.completeOAuthUser('google');
+        const expiredToken = await factory.oauthAccount(user.id, {
+          provider: 'google',
+          access_token: 'expired_token',
+          expires_at: Math.floor(Date.now() / 1000) - 3600, // Expired 1 hour ago
+        });
+
+        signIn.mockImplementationOnce(() => ({
+          error: 'token_refresh_failed',
+          ok: false,
+          status: 401,
+          url: null,
+        }));
+
+        const result = await signIn('google');
+        expect(result.error).toBe('token_refresh_failed');
+        expect(result.ok).toBe(false);
+      });
+
+      it('should handle account linking conflicts during OAuth', async () => {
+        // Create first user with Google account
+        const { user: firstUser } = await factory.completeOAuthUser('google', {
+          email: 'first@example.com',
+        });
+
+        // Attempt to link same email to different account
+        signIn.mockImplementationOnce(() => ({
+          error: 'account_exists',
+          ok: false,
+          status: 409,
+          url: null,
+        }));
+
+        const result = await signIn('google', {
+          email: 'first@example.com',
+        });
+
+        expect(result.error).toBe('account_exists');
+        expect(result.status).toBe(409);
+
+        // Verify original account remains unchanged
+        const unchangedUser = await prisma.user.findUnique({
+          where: { id: firstUser.id },
+          include: { accounts: true },
+        });
+
+        expect(unchangedUser).toBeDefined();
+        expect(unchangedUser?.accounts).toHaveLength(1);
+      });
     });
 
     describe('Data Validation Errors', () => {

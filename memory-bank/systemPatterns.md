@@ -28,194 +28,66 @@ src/
    - Use consistent prefixes (e.g., Create-, Update-, Delete-)
    - Keep in feature-specific files
 
-## Component Patterns
+## Authentication Patterns
 
-### Component Structure
-
-## TypeScript Patterns
-
-### Type Definition Best Practices
+### Development Auth Bypass
 ```typescript
-// Prefer undefined over null for optional values
-interface GoodPattern {
-  optionalField?: string;    // ✓ Use undefined
-  arrayField?: string[];     // ✓ Optional array
+// Configuration for development authentication
+export const devAuthConfig = {
+  testUser: {
+    email: 'test@example.com',
+    password: 'TestPassword123!',
+    name: 'Test User'
+  },
+  sessionDuration: 30 * 24 * 60 * 60 * 1000 // 30 days
 }
 
-interface AvoidPattern {
-  optionalField: string | null;  // ✗ Avoid null
-  arrayField: string[] | null;   // ✗ Avoid null arrays
-}
-```
-
-### State Updates with TypeScript
-```typescript
-// Explicit return types for state updates
-const [state, setState] = useState<MyType>();
-
-// Good: Explicit type annotation
-setState((prev): MyType => ({
-  ...prev,
-  field: newValue
-}));
-
-// Avoid: Implicit return type
-setState(prev => ({
-  ...prev,
-  field: newValue
-}));
-```
-
-### API Contract Alignment
-```typescript
-// Define API types first, then implement
-export interface ApiContract {
-  input: {
-    field: string;
-    optionalField?: string; // Use undefined consistently
-  };
-  output: {
-    result: string;
-  };
+// Development-only authentication bypass
+export const authOptions: NextAuthOptions = {
+  ...baseConfig,
+  callbacks: {
+    session: async ({ session, token }) => {
+      if (process.env.NODE_ENV === 'development') {
+        // Auto-extend session in development
+        session.expires = new Date(
+          Date.now() + devAuthConfig.sessionDuration
+        ).toISOString()
+      }
+      return session
+    }
+  }
 }
 
-// Frontend and backend share types
-const apiCall = async (input: ApiContract['input']): Promise<ApiContract['output']> => {
-  // Implementation
-};
-```
-
-### Type Safety Guidelines
-1. API Contract First
-   - Define shared types between frontend and backend
-   - Use consistent nullability (prefer undefined)
-   - Document breaking changes
-   - Validate types at API boundaries
-
-2. State Management
-   - Use explicit type annotations in state updates
-   - Define clear interfaces for component state
-   - Avoid type assertions unless absolutely necessary
-   - Document any type assertions with comments
-
-3. Component Design
-   - Consider type requirements during design phase
-   - Create reusable type utilities
-   - Keep type definitions close to usage
-   - Use strict TypeScript configuration
-
-4. Type Transformations
-   - Create utility functions for common transformations
-   - Handle nullable values consistently
-   - Validate data at boundaries
-   - Use type guards for runtime safety
-
-5. Error Prevention
-   - Review type definitions during code review
-   - Use strict null checks
-   - Document type expectations
-   - Write type-safe utility functions
-
-### Common Pitfalls
-```typescript
-// Avoid mixing null and undefined
-// ✗ Bad
-type Inconsistent = {
-  field1: string | null;
-  field2?: string;
+// Middleware with development bypass
+export function middleware(request: NextRequest) {
+  if (process.env.NODE_ENV === 'development') {
+    const hasAuthCookie = request.cookies.has('next-auth.session-token')
+    if (!hasAuthCookie) {
+      return handleDevAuth(request)
+    }
+  }
+  return protectedRouteHandler(request)
 }
 
-// ✓ Good
-type Consistent = {
-  field1?: string;
-  field2?: string;
-}
-
-// Avoid type assertions without validation
-// ✗ Bad
-const data = someData as MyType;
-
-// ✓ Good
-function isMyType(data: unknown): data is MyType {
-  // Validation logic
-  return true;
-}
-const data = validateMyType(someData);
-```
-
-```typescript
-// Imports grouped by type
-import { type dependencies } from 'external'
-import { type internal } from '@/internal'
-
-// Types at the top
-interface Props {
-  // Props definition
-}
-
-// Component definition
-export function ComponentName({ prop1, prop2 }: Props) {
-  // Hook calls
-  // State management
-  // Event handlers
-  // Render logic
-}
-```
-
-### State Management
-1. Server State
-   - Use React Query for API data
-   - Implement stale-while-revalidate
-   - Handle loading/error states
-
-2. Client State
-   - Use Zustand for global state
-   - React state for component-level
-   - Derive state when possible
-
-### Form Handling
-1. Structure
-   - Form component wrapper
-   - Field-level components
-   - Validation schema
-   - Submit handler
-
-2. Validation
-   - Zod schemas
-   - Field-level validation
-   - Form-level validation
-   - Error messaging
-
-## API Patterns
-
-### TRPC Procedures
-1. Structure
-```typescript
-export const exampleRouter = router({
-  list: protectedProcedure
-    .input(schema)
-    .query(async ({ ctx, input }) => {
-      // Implementation
-    }),
-  // Other procedures
-})
-```
-
-2. Error Handling
-```typescript
-try {
-  // Operation
-} catch (error) {
-  throw new TRPCError({
-    code: 'INTERNAL_SERVER_ERROR',
-    message: 'Specific error message',
-    cause: error
+// Development authentication handler
+async function handleDevAuth(request: NextRequest) {
+  // Auto-login with test account
+  const response = await signIn('credentials', {
+    email: devAuthConfig.testUser.email,
+    password: devAuthConfig.testUser.password,
+    redirect: false
   })
+
+  if (response?.error) {
+    console.error('Dev auth failed:', response.error)
+    return new Response('Auth Error', { status: 500 })
+  }
+
+  return NextResponse.redirect(request.url)
 }
 ```
 
-### Authentication
-1. Protected Routes
+### Protected Routes
 ```typescript
 export const protectedProcedure = procedure.use(isAuthed)
 
@@ -231,7 +103,7 @@ export const isAuthed = middleware(async ({ ctx, next }) => {
 })
 ```
 
-2. Session Handling
+### Session Handling
 ```typescript
 export const authOptions: NextAuthOptions = {
   callbacks: {
@@ -246,234 +118,283 @@ export const authOptions: NextAuthOptions = {
 }
 ```
 
-## Database Patterns
-
-### Prisma Operations
-1. Query Structure
-```typescript
-const result = await prisma.model.findMany({
-  where: {
-    // Conditions
-  },
-  include: {
-    // Relations
-  },
-  orderBy: {
-    // Sorting
-  }
-})
-```
-
-2. Error Handling
-```typescript
-try {
-  await prisma.$transaction(async (tx) => {
-    // Operations
-  })
-} catch (error) {
-  if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    // Handle specific error
-  }
-  throw error
-}
-```
-
-## Testing Patterns
-
-### Unit Tests
-```typescript
-describe('Component/Function', () => {
-  it('should handle specific case', () => {
-    // Arrange
-    // Act
-    // Assert
-  })
-})
-```
-
-### Integration Tests
-```typescript
-describe('Feature', () => {
-  beforeAll(async () => {
-    // Setup
-  })
-
-  afterAll(async () => {
-    // Cleanup
-  })
-
-  it('should work end-to-end', async () => {
-    // Implementation
-  })
-})
-```
-
-## Error Handling Patterns
-
-### Client-Side
-```typescript
-try {
-  const result = await mutation.mutateAsync(data)
-  toast.success('Operation successful')
-} catch (error) {
-  toast.error(getErrorMessage(error))
-}
-```
-
-### Server-Side
-```typescript
-export function handleServerError(error: unknown): ApiError {
-  if (error instanceof CustomError) {
-    return {
-      code: error.code,
-      message: error.message
-    }
-  }
-  return {
-    code: 'INTERNAL_SERVER_ERROR',
-    message: 'An unexpected error occurred'
-  }
-}
-```
-
-## Scheduling Patterns
-
-### Recurring Schedule Structure
-```typescript
-interface RecurringSchedule {
-  pattern: {
-    frequency: 'daily' | 'weekly' | 'monthly'
-    interval: number
-    weekdays?: number[]
-    monthDay?: number
-    endType: 'never' | 'after_occurrences' | 'on_date'
-    occurrences?: number
-    endDate?: Date
-  }
-  exceptions: {
-    originalDate: Date
-    newDate?: Date
-    isCancelled: boolean
-  }[]
-}
-```
-
-### Pattern Generation
-```typescript
-function generateOccurrences(pattern: RecurringPattern, startDate: Date, endDate: Date): Date[] {
-  // Implementation based on frequency
-  switch (pattern.frequency) {
-    case 'daily':
-      return generateDailyOccurrences(pattern, startDate, endDate)
-    case 'weekly':
-      return generateWeeklyOccurrences(pattern, startDate, endDate)
-    case 'monthly':
-      return generateMonthlyOccurrences(pattern, startDate, endDate)
-  }
-}
-```
-
-### Exception Handling
-```typescript
-function applyExceptions(dates: Date[], exceptions: RecurrenceException[]): Date[] {
-  return dates.map(date => {
-    const exception = findException(date, exceptions)
-    if (!exception) return date
-    if (exception.isCancelled) return null
-    return exception.newDate
-  }).filter(Boolean)
-}
-```
-
 ## Weather Integration Patterns
 
-### Weather Check Structure
+### Weather Service Configuration
 ```typescript
-interface WeatherCheck {
-  date: Date
-  location: {
-    latitude: number
-    longitude: number
-    timezone: string
+interface WeatherConfig {
+  apiKey: string
+  updateInterval: number
+  alertThresholds: {
+    temperature: number
+    precipitation: number
+    wind: number
   }
-  conditions: {
+  scoreWeights: {
     temperature: number
     humidity: number
     precipitation: number
-    windSpeed: number
+    wind: number
   }
-  treatmentType: string
+}
+
+const weatherConfig: WeatherConfig = {
+  apiKey: process.env.OPENWEATHER_API_KEY,
+  updateInterval: 30 * 60 * 1000, // 30 minutes
+  alertThresholds: {
+    temperature: 32, // Celsius
+    precipitation: 0.5, // mm/hour
+    wind: 20 // km/h
+  },
+  scoreWeights: {
+    temperature: 0.4,
+    humidity: 0.2,
+    precipitation: 0.3,
+    wind: 0.1
+  }
 }
 ```
 
-### Weather Optimization
+### Weather Monitoring System
 ```typescript
-function optimizeSchedule(schedule: Schedule, weatherData: WeatherData[]): Schedule {
+class WeatherMonitor {
+  private schedules: Map<string, Schedule> = new Map()
+  private alerts: Map<string, WeatherAlert[]> = new Map()
+
+  constructor(private config: WeatherConfig) {
+    this.startMonitoring()
+  }
+
+  private async startMonitoring() {
+    setInterval(async () => {
+      for (const [id, schedule] of this.schedules) {
+        await this.checkWeather(schedule)
+      }
+    }, this.config.updateInterval)
+  }
+
+  private async checkWeather(schedule: Schedule) {
+    const weather = await this.fetchWeather(schedule.location)
+    const score = this.calculateScore(weather)
+    
+    if (this.needsAlert(score)) {
+      this.createAlert(schedule, weather)
+    }
+  }
+
+  private calculateScore(weather: WeatherData): number {
+    return Object.entries(this.config.scoreWeights)
+      .reduce((score, [key, weight]) => {
+        return score + (weather[key] * weight)
+      }, 0)
+  }
+}
+```
+
+### Schedule Optimization
+```typescript
+interface OptimizationResult {
+  score: number
+  suggestedDate?: Date
+  reason?: string
+}
+
+function optimizeSchedule(
+  schedule: Schedule,
+  forecast: WeatherForecast[]
+): Schedule {
   return {
     ...schedule,
     treatments: schedule.treatments.map(treatment => {
-      const weather = findWeatherForDate(treatment.date, weatherData)
-      const score = calculateWeatherScore(weather, treatment.type)
+      const result = findOptimalDate(treatment, forecast)
       
-      if (score < WEATHER_THRESHOLD) {
-        return findAlternativeDate(treatment, weatherData)
+      if (result.score < WEATHER_THRESHOLD) {
+        return {
+          ...treatment,
+          date: result.suggestedDate,
+          adjustmentReason: result.reason
+        }
       }
       return treatment
     })
   }
 }
-```
 
-### Weather Monitoring
-```typescript
-function monitorWeatherConditions(schedule: Schedule): void {
-  // Monitor upcoming treatments
-  schedule.treatments.forEach(treatment => {
-    if (isUpcoming(treatment.date)) {
-      startWeatherMonitoring(treatment)
-    }
-  })
-}
+function findOptimalDate(
+  treatment: Treatment,
+  forecast: WeatherForecast[]
+): OptimizationResult {
+  const scores = forecast
+    .map(day => ({
+      date: day.date,
+      score: calculateTreatmentScore(treatment, day)
+    }))
+    .sort((a, b) => b.score - a.score)
 
-function handleWeatherAlert(alert: WeatherAlert): void {
-  if (alert.severity === 'critical') {
-    createException(alert.treatmentId, alert.suggestedDate)
-    notifyUser(alert)
+  return {
+    score: scores[0].score,
+    suggestedDate: scores[0].date,
+    reason: 'Optimal weather conditions'
   }
 }
 ```
 
-## UI/UX Patterns
+### Machine Learning Patterns
+
+```typescript
+// Treatment Effectiveness Analysis
+interface TreatmentEffectiveness {
+  score: number;
+  factors: Record<string, number>;
+  recommendations: string[];
+}
+
+class MLWeatherService {
+  // Effectiveness analysis with weighted scoring
+  private calculateEffectivenessScore(
+    conditions: WeatherData,
+    effectiveness: EffectivenessRating
+  ): number {
+    const baseScore = this.calculateBaseScore(conditions);
+    return this.adjustScoreByEffectiveness(baseScore, effectiveness);
+  }
+
+  // Time-of-day optimization
+  private calculateTimeOptimization(hour: number): number {
+    // Early morning preference (6-9 AM)
+    if (hour >= 6 && hour <= 9) return 0.5;
+    // Avoid mid-day (11 AM - 3 PM)
+    if (hour >= 11 && hour <= 15) return -0.3;
+    // Late afternoon consideration (3-6 PM)
+    if (hour >= 15 && hour <= 18) return 0.2;
+    return 0;
+  }
+
+  // Pattern recognition for optimal scheduling
+  private async findOptimalTime(
+    forecast: WeatherForecast[],
+    treatmentType: string
+  ): Promise<Date> {
+    return forecast
+      .map(period => ({
+        date: period.date,
+        score: this.calculateTotalScore(period, treatmentType)
+      }))
+      .sort((a, b) => b.score - a.score)[0].date;
+  }
+
+  // Smart recommendations generation
+  private generateRecommendations(
+    conditions: WeatherData,
+    effectiveness: TreatmentEffectiveness
+  ): string[] {
+    const recommendations = [];
+    for (const [factor, impact] of Object.entries(effectiveness.factors)) {
+      if (impact < 0.7) {
+        recommendations.push(this.getRecommendation(factor, conditions));
+      }
+    }
+    return recommendations;
+  }
+}
+```
+
+### Alert System
+```typescript
+interface WeatherAlert {
+  id: string
+  scheduleId: string
+  treatmentId: string
+  severity: 'warning' | 'critical'
+  condition: {
+    type: 'temperature' | 'precipitation' | 'wind'
+    value: number
+    threshold: number
+  }
+  suggestedAction: {
+    type: 'reschedule' | 'cancel' | 'modify'
+    details: string
+  }
+  createdAt: Date
+  expiresAt: Date
+}
+
+class AlertManager {
+  private alerts: WeatherAlert[] = []
+
+  createAlert(data: Omit<WeatherAlert, 'id' | 'createdAt'>): WeatherAlert {
+    const alert = {
+      ...data,
+      id: generateId(),
+      createdAt: new Date()
+    }
+    
+    this.alerts.push(alert)
+    this.notifyUsers(alert)
+    return alert
+  }
+
+  private async notifyUsers(alert: WeatherAlert) {
+    if (alert.severity === 'critical') {
+      await Promise.all([
+        this.sendPushNotification(alert),
+        this.sendEmail(alert)
+      ])
+    }
+  }
+}
+```
+
+## Component Patterns
 
 ### Loading States
-1. Skeleton Loading
 ```tsx
-{isLoading ? <Skeleton /> : <Content />}
+function LoadingState({ children, isLoading, skeleton }: LoadingStateProps) {
+  if (isLoading) {
+    return skeleton || <DefaultSkeleton />
+  }
+  return children
+}
 ```
 
-2. Button Loading
+### Error Handling
 ```tsx
-<Button
-  disabled={isLoading}
-  onClick={handleAction}
->
-  {isLoading ? 'Processing...' : 'Submit'}
-</Button>
+function ErrorBoundary({ children }: { children: React.ReactNode }) {
+  const [error, setError] = useState<Error | null>(null)
+
+  if (error) {
+    return (
+      <div className="error-container">
+        <h3>Something went wrong</h3>
+        <p>{error.message}</p>
+        <button onClick={() => setError(null)}>Try again</button>
+      </div>
+    )
+  }
+
+  return children
+}
 ```
 
-### Error States
-1. Form Errors
+### Form Patterns
 ```tsx
-{errors.field && (
-  <ErrorMessage>{errors.field.message}</ErrorMessage>
-)}
-```
+function FormWrapper<T extends FieldValues>({
+  children,
+  onSubmit,
+  schema
+}: FormWrapperProps<T>) {
+  const form = useForm<T>({
+    resolver: zodResolver(schema)
+  })
 
-2. API Errors
-```tsx
-{error && (
-  <Alert variant="error">{error.message}</Alert>
-)}
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        {children}
+      </form>
+    </Form>
+  )
+}
 ```
 
 ### Responsive Design

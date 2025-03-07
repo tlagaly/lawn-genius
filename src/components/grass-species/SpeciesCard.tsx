@@ -75,28 +75,40 @@ export function SpeciesCard({ species, onSelect, selected }: SpeciesCardProps) {
       {/* Key Characteristics */}
       <div className="space-y-2">
         <Tooltip content="How well the grass handles dry conditions">
-          <div className="flex justify-between text-sm">
+          <div
+            className="flex justify-between text-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
             <span>Drought Tolerance:</span>
             <span>{getToleranceLabel(characteristics.droughtTolerance)}</span>
           </div>
         </Tooltip>
 
         <Tooltip content="How well the grass grows in shaded areas">
-          <div className="flex justify-between text-sm">
+          <div
+            className="flex justify-between text-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
             <span>Shade Tolerance:</span>
             <span>{getToleranceLabel(characteristics.shadeTolerance)}</span>
           </div>
         </Tooltip>
 
         <Tooltip content="How well the grass handles foot traffic and activity">
-          <div className="flex justify-between text-sm">
+          <div
+            className="flex justify-between text-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
             <span>Wear Tolerance:</span>
             <span>{getToleranceLabel(characteristics.wearTolerance)}</span>
           </div>
         </Tooltip>
 
         <Tooltip content="Overall maintenance requirements">
-          <div className="flex justify-between text-sm font-medium">
+          <div
+            className="flex justify-between text-sm font-medium"
+            onClick={(e) => e.stopPropagation()}
+          >
             <span>Maintenance Level:</span>
             <span>{getMaintenanceLevel()}</span>
           </div>

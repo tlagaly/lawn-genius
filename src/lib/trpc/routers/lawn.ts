@@ -1,15 +1,20 @@
 import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc';
 
+const lawnGrassCompositionSchema = z.object({
+  speciesId: z.string().min(1),
+  percentage: z.number().min(1).max(100),
+});
+
 const lawnProfileSchema = z.object({
   name: z.string().min(1),
   size: z.number().positive(),
-  grassType: z.string().min(1),
   soilType: z.string().min(1),
   sunExposure: z.string().min(1),
   irrigation: z.boolean(),
   location: z.string().optional(),
   notes: z.string().optional(),
+  grassComposition: z.array(lawnGrassCompositionSchema),
 });
 
 export const lawnRouter = router({
@@ -18,6 +23,11 @@ export const lawnRouter = router({
       where: { userId: ctx.session.user.id },
       include: {
         schedules: true,
+        grassSpecies: {
+          include: {
+            species: true,
+          },
+        },
       },
     });
   }),
@@ -36,6 +46,11 @@ export const lawnRouter = router({
               treatments: true,
             },
           },
+          grassSpecies: {
+            include: {
+              species: true,
+            },
+          },
         },
       });
     }),
@@ -43,11 +58,31 @@ export const lawnRouter = router({
   create: protectedProcedure
     .input(lawnProfileSchema)
     .mutation(async ({ ctx, input }) => {
-      return ctx.prisma.lawnProfile.create({
-        data: {
-          ...input,
-          userId: ctx.session.user.id,
-        },
+      const { grassComposition, ...profileData } = input;
+
+      return ctx.prisma.$transaction(async (tx) => {
+        // Create lawn profile
+        const profile = await tx.lawnProfile.create({
+          data: {
+            ...profileData,
+            userId: ctx.session.user.id,
+            grassSpecies: {
+              create: grassComposition.map(comp => ({
+                speciesId: comp.speciesId,
+                percentage: comp.percentage,
+              })),
+            },
+          },
+          include: {
+            grassSpecies: {
+              include: {
+                species: true,
+              },
+            },
+          },
+        });
+
+        return profile;
       });
     }),
 
@@ -57,12 +92,41 @@ export const lawnRouter = router({
       data: lawnProfileSchema.partial(),
     }))
     .mutation(async ({ ctx, input }) => {
-      return ctx.prisma.lawnProfile.update({
-        where: {
-          id: input.id,
-          userId: ctx.session.user.id,
-        },
-        data: input.data,
+      const { grassComposition, ...profileData } = input.data;
+
+      return ctx.prisma.$transaction(async (tx) => {
+        // Delete existing grass composition if updating it
+        if (grassComposition) {
+          await tx.lawnGrassComposition.deleteMany({
+            where: { lawnProfileId: input.id },
+          });
+        }
+
+        // Update lawn profile and create new grass composition if provided
+        return tx.lawnProfile.update({
+          where: {
+            id: input.id,
+            userId: ctx.session.user.id,
+          },
+          data: {
+            ...profileData,
+            ...(grassComposition && {
+              grassSpecies: {
+                create: grassComposition.map(comp => ({
+                  speciesId: comp.speciesId,
+                  percentage: comp.percentage,
+                })),
+              },
+            }),
+          },
+          include: {
+            grassSpecies: {
+              include: {
+                species: true,
+              },
+            },
+          },
+        });
       });
     }),
 

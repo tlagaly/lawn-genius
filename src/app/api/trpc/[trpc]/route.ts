@@ -12,7 +12,20 @@ const handler = (req: NextRequest) => {
     req,
     router: appRouter,
     createContext: async () => {
-      const session = await getServerSession(authOptions);
+      let session = await getServerSession(authOptions);
+      
+      // In development, provide a mock session for the test account
+      if (process.env.NODE_ENV === 'development' && !session) {
+        session = {
+          user: {
+            id: 'test-user-id',
+            email: 'test@example.com',
+            name: 'Test User',
+          },
+          expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        };
+      }
+
       return createContext({
         headers: req.headers,
         session,

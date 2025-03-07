@@ -6,14 +6,24 @@ async function handler(req: NextRequest, context: any) {
   // Handle auto-login in development
   if (
     process.env.NODE_ENV === "development" &&
-    req.nextUrl.searchParams.get("auto") === "true"
+    req.nextUrl.searchParams.get("auto") === "true" &&
+    req.method === "POST"
   ) {
-    // Automatically set credentials for test account
-    const searchParams = new URLSearchParams(req.nextUrl.search);
-    searchParams.set("email", "test@example.com");
-    searchParams.set("password", "TestPassword123!");
-    searchParams.set("provider", "credentials");
-    req.nextUrl.search = searchParams.toString();
+    // Create a new request with test credentials in the body
+    const url = new URL(req.url);
+    const newReq = new Request(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: "test@example.com",
+        password: "TestPassword123!",
+        provider: "credentials",
+      }),
+    });
+
+    req = newReq;
   }
 
   const auth = await NextAuth(authOptions);

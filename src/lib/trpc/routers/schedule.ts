@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc';
 import { TRPCError } from '@trpc/server';
 import { weatherService } from '@/lib/weather';
-import { TREATMENT_CONDITIONS } from '@/lib/weather/types';
+import { TREATMENT_CONDITIONS, EffectivenessRating } from '@/lib/weather/types';
 import { Prisma } from '@prisma/client';
 
 // Basic types and helpers
@@ -79,7 +79,13 @@ const treatmentSchema = z.object({
   date: z.date(),
   notes: z.string().optional(),
   completed: z.boolean().optional(),
-  effectiveness: z.number().min(1).max(5).optional(),
+  effectiveness: z.union([
+    z.literal(1),
+    z.literal(2),
+    z.literal(3),
+    z.literal(4),
+    z.literal(5)
+  ]).optional(),
   weatherScore: z.number().min(1).max(5).optional(),
   actualDuration: z.number().optional(),
 });
@@ -378,20 +384,27 @@ export const scheduleRouter = router({
       }
 
       // If effectiveness is being updated and we have weather data, analyze it
-      let effectiveness = input.data.effectiveness;
+      let effectiveness = input.data.effectiveness as EffectivenessRating | undefined;
       if (effectiveness && treatment.weatherData) {
-        const insights = await weatherService.analyzeTreatmentEffectiveness(
+        const analysis = await weatherService.analyzeTreatmentEffectiveness(
           treatment.type,
           treatment.weatherData,
           effectiveness
         );
 
-        // Add insights to notes if they exist
-        if (insights.length > 0) {
-          input.data.notes = input.data.notes
-            ? `${input.data.notes}\n\nWeather Analysis:\n${insights.join('\n')}`
-            : `Weather Analysis:\n${insights.join('\n')}`;
-        }
+        // Add analysis to notes
+        const analysisNotes = [
+          `Weather Analysis:`,
+          `- Effectiveness Score: ${analysis.score}`,
+          `- Factors:`,
+          ...Object.entries(analysis.factors).map(([factor, value]) => `  * ${factor}: ${value}`),
+          `- Recommendations:`,
+          ...analysis.recommendations.map(rec => `  * ${rec}`)
+        ].join('\n');
+
+        input.data.notes = input.data.notes
+          ? `${input.data.notes}\n\n${analysisNotes}`
+          : analysisNotes;
       }
 
       return ctx.prisma.treatment.update({
@@ -420,17 +433,36 @@ export const scheduleRouter = router({
         },
       });
 
-      if (!treatment || !treatment.effectiveness || !treatment.weatherData) {
+      if (!treatment) {
         throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Treatment must have both effectiveness rating and weather data for analysis',
+          code: 'NOT_FOUND',
+          message: 'Treatment not found',
         });
       }
+
+      if (!treatment.weatherData) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Treatment must have associated weather data for analysis',
+        });
+      }
+
+      if (!treatment.effectiveness ||
+          treatment.effectiveness < 1 ||
+          treatment.effectiveness > 5) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Treatment must have a valid effectiveness rating (1-5)',
+        });
+      }
+
+      // Type assertion is safe here because we've validated the range
+      const effectiveness = treatment.effectiveness as EffectivenessRating;
 
       return weatherService.analyzeTreatmentEffectiveness(
         treatment.type,
         treatment.weatherData,
-        treatment.effectiveness
+        effectiveness
       );
     }),
 

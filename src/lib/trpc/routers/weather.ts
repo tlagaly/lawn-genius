@@ -110,7 +110,13 @@ export const weatherRouter = router({
         windSpeed: z.number(),
         conditions: z.string()
       }),
-      effectiveness: z.number().min(1).max(5)
+      effectiveness: z.union([
+        z.literal(1),
+        z.literal(2),
+        z.literal(3),
+        z.literal(4),
+        z.literal(5)
+      ])
     }))
     .query(({ input }) => {
       const { treatmentType, weatherData, effectiveness } = input;

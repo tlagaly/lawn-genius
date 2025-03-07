@@ -13,6 +13,11 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
       links: [
         httpBatchLink({
           url: getUrl(),
+          headers() {
+            return {
+              'x-trpc-source': 'react',
+            };
+          },
         }),
       ],
       transformer: superjson,

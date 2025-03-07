@@ -1,22 +1,14 @@
 import { WeatherAlert, WeatherAlertType } from '@/lib/weather/types';
 import { NotificationService } from './index';
 import { prisma } from '@/lib/db/prisma';
-
-type PushNotificationData = {
-  title: string;
-  body: string;
-  data: {
-    type: string;
-    alertId: string;
-    treatmentId: string;
-  };
-};
+import { PushNotificationData, WeatherAlertNotification } from './types';
 
 export class WeatherNotificationHandler {
   private static isValidCondition(condition: unknown): condition is WeatherAlertType {
     return typeof condition === 'string' &&
       ['temperature', 'wind', 'precipitation', 'conditions'].includes(condition);
   }
+
   static async handleWeatherAlert(alert: WeatherAlert): Promise<void> {
     try {
       // 1. Save alert to database
@@ -27,8 +19,14 @@ export class WeatherNotificationHandler {
           severity: alert.severity,
           message: alert.message,
           suggestedDate: alert.suggestedDate,
+          emailSent: false,
+          pushSent: false,
+          readAt: null,
+          actionTaken: null,
+          createdAt: new Date(),
+          updatedAt: new Date()
         },
-      });
+      }) as WeatherAlertNotification;
 
       // 2. Get treatment details to find the user
       const treatment = await prisma.treatment.findUnique({

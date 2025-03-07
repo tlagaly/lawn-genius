@@ -1,19 +1,20 @@
-import { WeatherData, TreatmentType } from '../types';
+import { WeatherData, TreatmentType, EffectivenessRating } from '../types';
 
 export interface TrainingData {
-  weatherData: WeatherData;
+  weatherConditions: WeatherData;
   treatmentType: TreatmentType;
-  effectiveness: number; // 0-1 scale
+  effectiveness: EffectivenessRating;
   timestamp: Date;
 }
 
 export interface PredictionResult {
-  effectiveness: number; // 0-1 scale
-  confidence: number; // 0-1 scale
+  score: number; // 0-1 prediction score
+  confidence: number; // 0-1 confidence level
   factors: {
-    [key: string]: number;
-  };
-  recommendations: string[];
+    name: string;
+    weight: number;
+    impact: 'positive' | 'negative' | 'neutral';
+  }[];
 }
 
 export interface ModelMetrics {
@@ -21,23 +22,13 @@ export interface ModelMetrics {
   precision: number;
   recall: number;
   f1Score: number;
-  lastTrainingDate: Date;
   dataPoints: number;
+  lastUpdated: Date;
 }
 
-export interface ConfidenceScore {
-  value: number;
-  factors: {
-    dataQuality: number;
-    dataQuantity: number;
-    seasonalRelevance: number;
-    weatherStability: number;
-  };
-}
-
-export interface TrainingConfig {
-  minDataPoints: number;
-  validationSplit: number;
-  seasonalWeight: number;
-  retrainingThreshold: number;
+export interface MLConfig {
+  minDataPoints: number; // Minimum data points needed for training
+  confidenceThreshold: number; // Minimum confidence for predictions
+  trainingInterval: number; // Hours between model updates
+  featureWeights: Record<string, number>; // Importance of different weather features
 }

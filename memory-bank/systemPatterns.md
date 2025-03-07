@@ -242,60 +242,159 @@ function findOptimalDate(
 ### Machine Learning Patterns
 
 ```typescript
-// Treatment Effectiveness Analysis
-interface TreatmentEffectiveness {
-  score: number;
-  factors: Record<string, number>;
-  recommendations: string[];
+// Type-safe weather metrics
+interface WeatherData {
+  temperature: number;
+  humidity: number;
+  precipitation: number;
+  windSpeed: number;
+  conditions: string;
+  [key: string]: number | string;
 }
 
-class MLWeatherService {
-  // Effectiveness analysis with weighted scoring
-  private calculateEffectivenessScore(
-    conditions: WeatherData,
-    effectiveness: EffectivenessRating
-  ): number {
-    const baseScore = this.calculateBaseScore(conditions);
-    return this.adjustScoreByEffectiveness(baseScore, effectiveness);
-  }
+// Type guard for weather metrics
+function isWeatherMetric(key: string): key is keyof WeatherData {
+  return [
+    'temperature',
+    'humidity',
+    'precipitation',
+    'windSpeed',
+    'conditions'
+  ].includes(key);
+}
 
-  // Time-of-day optimization
-  private calculateTimeOptimization(hour: number): number {
-    // Early morning preference (6-9 AM)
-    if (hour >= 6 && hour <= 9) return 0.5;
-    // Avoid mid-day (11 AM - 3 PM)
-    if (hour >= 11 && hour <= 15) return -0.3;
-    // Late afternoon consideration (3-6 PM)
-    if (hour >= 15 && hour <= 18) return 0.2;
-    return 0;
-  }
+// ML Service with confidence scoring
+class WeatherMLService {
+  private config: MLConfig = {
+    minDataPoints: 50,
+    confidenceThreshold: 0.7,
+    trainingInterval: 24,
+    featureWeights: {
+      temperature: 1.0,
+      humidity: 0.8,
+      precipitation: 1.0,
+      windSpeed: 0.6,
+      soilMoisture: 0.9
+    }
+  };
 
-  // Pattern recognition for optimal scheduling
-  private async findOptimalTime(
-    forecast: WeatherForecast[],
-    treatmentType: string
-  ): Promise<Date> {
-    return forecast
-      .map(period => ({
-        date: period.date,
-        score: this.calculateTotalScore(period, treatmentType)
-      }))
-      .sort((a, b) => b.score - a.score)[0].date;
-  }
+  // Type-safe metric handling
+  private calculateBaseScore(weatherData: WeatherData): number {
+    let score = 0;
+    let totalWeight = 0;
 
-  // Smart recommendations generation
-  private generateRecommendations(
-    conditions: WeatherData,
-    effectiveness: TreatmentEffectiveness
-  ): string[] {
-    const recommendations = [];
-    for (const [factor, impact] of Object.entries(effectiveness.factors)) {
-      if (impact < 0.7) {
-        recommendations.push(this.getRecommendation(factor, conditions));
+    for (const [feature, weight] of Object.entries(this.config.featureWeights)) {
+      if (isWeatherMetric(feature) && typeof weatherData[feature] === 'number') {
+        score += this.normalizeFeature(feature, weatherData[feature] as number) * weight;
+        totalWeight += weight;
       }
     }
-    return recommendations;
+
+    return totalWeight > 0 ? score / totalWeight : 0;
   }
+
+  // Metric-specific confidence scoring
+  private calculateMetricConfidence(feature: string, value: number): number {
+    let confidence = 0.9;
+
+    switch (feature) {
+      case 'temperature':
+        if (value < 0 || value > 100) confidence *= 0.8;
+        break;
+      case 'humidity':
+        if (value < 20) confidence *= 0.85;
+        break;
+      case 'windSpeed':
+        if (value > 20) confidence *= 0.75;
+        break;
+    }
+
+    return Math.max(confidence, this.config.confidenceThreshold);
+  }
+
+  // Quality-filtered training data
+  async addTrainingData(data: TrainingData): Promise<void> {
+    await prisma.weatherTrainingData.create({
+      data: {
+        weatherData: data.weatherConditions,
+        treatmentType: data.treatmentType,
+        effectiveness: data.effectiveness,
+        dataQuality: 1.0,
+        confidence: 0.9
+      }
+    });
+  }
+}
+```
+
+### Enhanced UI Component Patterns
+
+```typescript
+// Accessible Tooltip Pattern
+function AccessibleTooltip({ content, children }: TooltipProps) {
+  return (
+    <Tooltip content={content}>
+      <button
+        type="button"
+        className="bg-transparent hover:bg-accent/50 px-2 py-1 rounded transition-colors"
+        onClick={(e) => e.stopPropagation()}
+        aria-label={`Information: ${content}`}
+      >
+        {children}
+      </button>
+    </Tooltip>
+  );
+}
+
+// Enhanced Image Component
+function OptimizedImage({
+  src,
+  alt,
+  description,
+  priority = false
+}: ImageProps) {
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  return (
+    <div className="relative">
+      {loading && (
+        <div className="animate-pulse space-y-2 w-full h-full">
+          <div className="h-full w-full bg-accent/20 rounded" />
+        </div>
+      )}
+      
+      <Image
+        src={!error ? src : '/fallback.jpg'}
+        alt={alt}
+        fill
+        sizes="(max-width: 640px) 100vw, (max-width: 1080px) 50vw, 33vw"
+        className={`
+          object-cover
+          transition-all duration-300
+          ${loading ? 'opacity-0 scale-[0.98]' : 'opacity-100 scale-100'}
+        `}
+        onError={() => {
+          console.error(`Failed to load image: ${src}`);
+          setError(true);
+          setLoading(false);
+        }}
+        onLoad={() => setLoading(false)}
+        priority={priority}
+        quality={90}
+      />
+
+      {description && !loading && !error && (
+        <AccessibleTooltip content={description}>
+          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2">
+            {description.length > 50
+              ? `${description.slice(0, 47)}...`
+              : description}
+          </div>
+        </AccessibleTooltip>
+      )}
+    </div>
+  );
 }
 ```
 

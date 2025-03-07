@@ -4,11 +4,26 @@ export interface WeatherData {
   precipitation: number;
   windSpeed: number;
   conditions: string;
-  uvIndex: number;
-  soilMoisture: number;
-  pressure: number;
-  dewPoint: number;
-  visibility: number;
+  uvIndex?: number;
+  soilMoisture?: number;
+  pressure?: number;
+  dewPoint?: number;
+  visibility?: number;
+}
+
+// Type guard for numeric weather metrics
+export function isWeatherMetric(key: string): key is keyof Omit<WeatherData, 'conditions'> {
+  return [
+    'temperature',
+    'humidity',
+    'precipitation',
+    'windSpeed',
+    'uvIndex',
+    'soilMoisture',
+    'pressure',
+    'dewPoint',
+    'visibility'
+  ].includes(key);
 }
 
 export interface WeatherMetricThresholds {
@@ -19,7 +34,22 @@ export interface WeatherMetricThresholds {
   visibility: { min: number; max: number };
 }
 
-export interface WeatherForecast extends WeatherData {
+// Create a base interface for common weather properties
+interface BaseWeatherData {
+  temperature: number;
+  humidity: number;
+  precipitation: number;
+  windSpeed: number;
+  conditions: string;
+  uvIndex?: number;
+  soilMoisture?: number;
+  pressure?: number;
+  dewPoint?: number;
+  visibility?: number;
+}
+
+// Extend the base interface for forecast data
+export interface WeatherForecast extends BaseWeatherData {
   date: Date;
   probability: number; // Precipitation probability
 }
@@ -107,7 +137,6 @@ export const TREATMENT_CONDITIONS: Record<string, TreatmentConditions> = {
 export interface WeatherAlert {
   id: string;
   treatmentId: string;
-  treatmentType: string;
   type: 'temperature' | 'wind' | 'precipitation' | 'conditions' | 'uv' | 'soil' | 'dewpoint' | 'visibility';
   severity: 'info' | 'warning' | 'critical';
   priority: number; // 1-5, higher is more urgent

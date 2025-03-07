@@ -75,43 +75,47 @@ export function SpeciesCard({ species, onSelect, selected }: SpeciesCardProps) {
       {/* Key Characteristics */}
       <div className="space-y-2">
         <Tooltip content="How well the grass handles dry conditions">
-          <div
-            className="flex justify-between text-sm"
+          <button
+            type="button"
+            className="w-full flex justify-between text-sm bg-transparent hover:bg-accent/50 px-2 py-1 rounded transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             <span>Drought Tolerance:</span>
             <span>{getToleranceLabel(characteristics.droughtTolerance)}</span>
-          </div>
+          </button>
         </Tooltip>
 
         <Tooltip content="How well the grass grows in shaded areas">
-          <div
-            className="flex justify-between text-sm"
+          <button
+            type="button"
+            className="w-full flex justify-between text-sm bg-transparent hover:bg-accent/50 px-2 py-1 rounded transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             <span>Shade Tolerance:</span>
             <span>{getToleranceLabel(characteristics.shadeTolerance)}</span>
-          </div>
+          </button>
         </Tooltip>
 
         <Tooltip content="How well the grass handles foot traffic and activity">
-          <div
-            className="flex justify-between text-sm"
+          <button
+            type="button"
+            className="w-full flex justify-between text-sm bg-transparent hover:bg-accent/50 px-2 py-1 rounded transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             <span>Wear Tolerance:</span>
             <span>{getToleranceLabel(characteristics.wearTolerance)}</span>
-          </div>
+          </button>
         </Tooltip>
 
         <Tooltip content="Overall maintenance requirements">
-          <div
-            className="flex justify-between text-sm font-medium"
+          <button
+            type="button"
+            className="w-full flex justify-between text-sm font-medium bg-transparent hover:bg-accent/50 px-2 py-1 rounded transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             <span>Maintenance Level:</span>
             <span>{getMaintenanceLevel()}</span>
-          </div>
+          </button>
         </Tooltip>
       </div>
 

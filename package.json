@@ -11,7 +11,10 @@
     "start": "next start",
     "lint": "next lint",
     "generate-vapid-keys": "node scripts/generate-vapid-keys.js",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "setup-test-db": "ts-node scripts/setup-test-db.ts",
+    "test": "npm run setup-test-db && jest",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.8.0",
@@ -33,7 +36,9 @@
     "@trpc/client": "^10.45.2",
     "@trpc/react-query": "^10.45.2",
     "@trpc/server": "^10.45.2",
+    "@types/bcrypt": "^5.0.2",
     "@types/bcryptjs": "^2.4.6",
+    "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -53,6 +58,8 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.0",
+    "@commitlint/config-conventional": "^19.8.0",
     "@eslint/eslintrc": "^3",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.2.0",
@@ -64,12 +71,15 @@
     "autoprefixer": "^10.4.17",
     "eslint": "^9",
     "eslint-config-next": "15.2.1",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "jest-mock-extended": "^4.0.0-beta1",
+    "lint-staged": "^15.4.3",
     "postcss": "^8.4.35",
     "prisma": "^6.4.1",
     "tailwindcss": "^3.4.1",
+    "ts-jest": "^29.2.6",
     "ts-node": "^10.9.2",
     "typescript": "^5"
   }

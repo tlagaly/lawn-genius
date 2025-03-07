@@ -1,32 +1,27 @@
-import '@testing-library/jest-dom';
+// Mock environment variables
+process.env.OPENWEATHER_API_KEY = 'test-api-key';
+process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+process.env.NEXTAUTH_URL = 'http://localhost:3000';
+process.env.NEXTAUTH_SECRET = 'test-secret';
+process.env.GOOGLE_CLIENT_ID = 'test-google-client-id';
+process.env.GOOGLE_CLIENT_SECRET = 'test-google-client-secret';
 
-// Mock next/navigation
-jest.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-    back: jest.fn(),
-  }),
-  usePathname: () => '',
-  useSearchParams: () => new URLSearchParams(),
+// Mock NextAuth session
+jest.mock('next-auth', () => ({
+  getServerSession: jest.fn(),
 }));
 
-// Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-};
+// Mock TRPC context
+jest.mock('@/lib/trpc/context', () => ({
+  createContext: jest.fn(),
+}));
 
-// Mock Intersection Observer
-global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-};
-
-// Reset all mocks after each test
-afterEach(() => {
+// Reset all mocks between tests
+beforeEach(() => {
   jest.clearAllMocks();
+});
+
+// Clean up after all tests
+afterAll(() => {
+  jest.resetAllMocks();
 });

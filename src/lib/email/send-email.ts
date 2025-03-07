@@ -5,6 +5,7 @@ interface EmailOptions {
   subject: string;
   text: string;
   html: string;
+  headers?: Record<string, string>;
 }
 
 // For testing, we'll use a mock transporter
@@ -41,9 +42,11 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
   const transporter = createTransporter();
   
   try {
+    const { headers, ...emailOptions } = options;
     await transporter.sendMail({
       from: process.env.SMTP_FROM || 'noreply@lawngenius.com',
-      ...options
+      ...emailOptions,
+      headers: headers || {}
     });
   } catch (error) {
     console.error('Failed to send email:', error);

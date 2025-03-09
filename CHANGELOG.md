@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1] - 2025-03-09
+
+### Documentation
+- docs(deployment): Enhanced deployment documentation with detailed environment setup
+- docs(monitoring): Updated monitoring system documentation with integration examples
+- docs(security): Improved security considerations in deployment guide
+
 ## [1.1.0] - 2025-03-08
 
 ### Added

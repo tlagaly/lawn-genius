@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npx prisma generate && npm run build",
+  "buildCommand": "npm run prisma:setup && npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
@@ -9,15 +9,5 @@
       "main": true,
       "staging": true
     }
-  },
-  "env": {
-    "NODE_ENV": "production",
-    "DATABASE_RELATION_MODE": "prisma",
-    "DATABASE_SSL_ENABLED": "true",
-    "DATABASE_SSL_REJECT_UNAUTHORIZED": "true",
-    "DATABASE_POOL_MIN": "2",
-    "DATABASE_POOL_MAX": "20",
-    "DATABASE_POOL_TIMEOUT": "30000",
-    "DATABASE_POOL_IDLE_TIMEOUT": "60000"
   }
 }

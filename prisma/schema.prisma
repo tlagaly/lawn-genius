@@ -10,17 +10,8 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // Enable connection pooling
   directUrl = env("DIRECT_DATABASE_URL")
-  // Configurations for different environments
-  relationMode = env("DATABASE_RELATION_MODE")
-  // Connection pool settings
-  poolTimeout = env("DATABASE_POOL_TIMEOUT")
-  pool = {
-    min = env("DATABASE_POOL_MIN")
-    max = env("DATABASE_POOL_MAX")
-    idleTimeout = env("DATABASE_POOL_IDLE_TIMEOUT")
-  }
+  relationMode = "prisma"
 }
 
 model User {
@@ -343,7 +334,7 @@ model Schedule {
   lawnProfile     LawnProfile @relation(fields: [lawnProfileId], references: [id], onDelete: Cascade)
   treatments      Treatment[]
   recurrencePattern RecurrencePattern? @relation("ScheduleRecurrence")
-  parentSchedule  Schedule?   @relation("RecurringSchedules", fields: [parentScheduleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parentSchedule  Schedule?   @relation("RecurringSchedules", fields: [parentScheduleId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   childSchedules  Schedule[]  @relation("RecurringSchedules")
 }
 
@@ -401,7 +392,7 @@ model Treatment {
 
   // Relations
   schedule          Schedule      @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
-  treatmentType     TreatmentType @relation(fields: [treatmentTypeId], references: [id])
+  treatmentType     TreatmentType @relation(fields: [treatmentTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   weatherData       WeatherCondition?
   weatherAlerts   WeatherAlert[]
 }

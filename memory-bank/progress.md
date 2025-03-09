@@ -62,7 +62,11 @@
 - [x] Improved test isolation and cleanup
 - [x] Added concurrent session handling
 - [x] Completed OAuth error handling tests
-- [ ] Implement password reset testing
+- [x] Implement password reset testing
+  - [x] Token generation/validation tests
+  - [x] Rate limiting and lockout tests
+  - [x] Password validation tests
+  - [x] Security timing tests
 - [ ] Expand E2E test coverage
 - [ ] Set up continuous testing pipeline
 

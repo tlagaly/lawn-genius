@@ -334,7 +334,7 @@ model Schedule {
   lawnProfile     LawnProfile @relation(fields: [lawnProfileId], references: [id], onDelete: Cascade)
   treatments      Treatment[]
   recurrencePattern RecurrencePattern? @relation("ScheduleRecurrence")
-  parentSchedule  Schedule?   @relation("RecurringSchedules", fields: [parentScheduleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parentSchedule  Schedule?   @relation("RecurringSchedules", fields: [parentScheduleId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   childSchedules  Schedule[]  @relation("RecurringSchedules")
 }
 

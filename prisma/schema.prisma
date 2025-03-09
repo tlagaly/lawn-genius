@@ -10,17 +10,8 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // Enable connection pooling
   directUrl = env("DIRECT_DATABASE_URL")
-  // Configurations for different environments
-  relationMode = env("DATABASE_RELATION_MODE")
-  // Connection pool settings
-  poolTimeout = env("DATABASE_POOL_TIMEOUT")
-  pool = {
-    min = env("DATABASE_POOL_MIN")
-    max = env("DATABASE_POOL_MAX")
-    idleTimeout = env("DATABASE_POOL_IDLE_TIMEOUT")
-  }
+  relationMode = "prisma"
 }
 
 model User {

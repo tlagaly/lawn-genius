@@ -345,6 +345,3 @@ export async function resetPassword(userId: string, newPassword: string) {
     });
   }
 }
-
-// For testing purposes
-export const mockSendEmail = jest.fn(async () => Promise.resolve());

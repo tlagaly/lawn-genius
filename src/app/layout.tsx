@@ -4,6 +4,7 @@ import { MainNav } from "@/components/navigation/MainNav";
 import { Footer } from "@/components/navigation/Footer";
 import { Providers } from "@/components/providers/Providers";
 import { Toaster } from "@/components/ui/toast";
+import { RegistrationSuccess } from "@/components/auth/RegistrationSuccess";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -65,6 +66,7 @@ export default function RootLayout({
           <MainNav />
           <main className="flex-grow">{children}</main>
           <Footer />
+          <RegistrationSuccess />
           <Toaster />
         </Providers>
       </body>

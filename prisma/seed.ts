@@ -1,32 +1,40 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { grassSpeciesData } from './seed-data/grass-species';
+import { seedUserManagement } from './seed-data/user-management';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+async function clearData() {
+  const tablenames = Prisma.dmmf.datamodel.models
+    .map(model => model.dbName || model.name)
+    .filter(name => name !== 'User'); // Keep users until last
+
+  console.log('Clearing tables:', tablenames.join(', '));
+  
+  // Clear all related tables first
+  await Promise.all(
+    tablenames.map(table =>
+      prisma.$executeRawUnsafe(`TRUNCATE TABLE "${table}" CASCADE;`)
+    )
+  );
+
+  // Finally clear users
+  await prisma.$executeRawUnsafe('TRUNCATE TABLE "User" CASCADE;');
+  
+  console.log('✓ All tables cleared');
+}
 
 async function main() {
   console.log('Starting seed...');
 
   try {
-    // Clear existing data
-    await prisma.grassSpecies.deleteMany();
-    console.log('Cleared existing grass species data');
+    // Clear all existing data
+    await clearData();
     
-    // Create test user
-    const hashedPassword = await bcrypt.hash('TestPassword123!', 10);
-    const testUser = await prisma.user.upsert({
-      where: { email: 'test@example.com' },
-      update: {},
-      create: {
-        email: 'test@example.com',
-        name: 'Test User',
-        password: hashedPassword,
-        emailNotifications: true,
-        pushNotifications: false,
-        notifyFrequency: 'immediate',
-      },
-    });
-    console.log(`Created/Updated test user: ${testUser.email}`);
+    // Seed user management data first (users are referenced by other models)
+    await seedUserManagement(prisma);
+    console.log('✓ Seeded user management data');
     
     // Seed grass species
     for (const species of grassSpeciesData) {

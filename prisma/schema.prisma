@@ -3,11 +3,24 @@
 
 generator client {
   provider = "prisma-client-js"
+  // Enable Edge runtime compatibility
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Enable connection pooling
+  directUrl = env("DIRECT_DATABASE_URL")
+  // Configurations for different environments
+  relationMode = env("DATABASE_RELATION_MODE")
+  // Connection pool settings
+  poolTimeout = env("DATABASE_POOL_TIMEOUT")
+  pool = {
+    min = env("DATABASE_POOL_MIN")
+    max = env("DATABASE_POOL_MAX")
+    idleTimeout = env("DATABASE_POOL_IDLE_TIMEOUT")
+  }
 }
 
 model User {
@@ -25,6 +38,12 @@ model User {
   sessions      Session[]
   passwordResets PasswordReset[]
 
+  // Enhanced User Management
+  profile       UserProfile?
+  preferences   UserPreferences?
+  settings      AccountSettings?
+  loginHistory  LoginRecord[]
+
   // Notification Preferences
   emailNotifications Boolean @default(true)
   pushNotifications Boolean @default(false)
@@ -39,6 +58,109 @@ model User {
   schedules     Schedule[]
   payments      Payment[]
   notifications Notification[]
+
+  @@index([email])
+}
+
+model UserProfile {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  displayName       String?
+  bio               String?   @db.Text
+  location          String?
+  website           String?
+  phoneNumber       String?
+  profession        String?
+  organization      String?
+  expertise         String[]  // lawn care specialties
+  certifications    String[]  // professional certifications
+  privacySettings   Json      // profile visibility settings
+  socialLinks       Json?     // social media profiles
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Profile Image
+  avatarUrl         String?
+  avatarThumbnail   String?
+  coverImage        String?
+
+  // Relations
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model UserPreferences {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  theme             String    @default("system") // light, dark, system
+  language          String    @default("en")
+  timezone          String
+  dateFormat        String    @default("MM/DD/YYYY")
+  timeFormat        String    @default("12h") // 12h, 24h
+  measurementSystem String    @default("imperial") // imperial, metric
+  accessibility     Json?     // accessibility preferences
+  dashboardLayout   Json?     // customized dashboard layout
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AccountSettings {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  
+  // Email Settings
+  primaryEmail      String    // same as user.email
+  backupEmail       String?   // secondary contact
+  emailVerified     Boolean   @default(false)
+  
+  // Security Settings
+  twoFactorEnabled  Boolean   @default(false)
+  twoFactorMethod   String?   // app, sms, email
+  twoFactorSecret   String?   // encrypted 2FA secret
+  passwordLastChanged DateTime?
+  securityQuestions Json?     // encrypted security QA
+  
+  // Communication Preferences
+  marketingEmails   Boolean   @default(true)
+  serviceUpdates    Boolean   @default(true)
+  securityAlerts    Boolean   @default(true)
+  
+  // Session Settings
+  sessionTimeout    Int       @default(30) // minutes
+  maxSessions       Int       @default(5)
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model LoginRecord {
+  id                String    @id @default(cuid())
+  userId            String
+  timestamp         DateTime  @default(now())
+  ipAddress         String?
+  userAgent         String?
+  device            String?
+  location          String?   // Geo location
+  status            String    // success, failed, blocked
+  failureReason     String?   // if status is failed/blocked
+  sessionId         String?   // associated session if successful
+
+  // Relations
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([timestamp])
 }
 
 model Notification {

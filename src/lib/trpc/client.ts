@@ -1,25 +1,20 @@
 import { createTRPCReact } from '@trpc/react-query';
-import { type AppRouter } from '@/lib/trpc/root';
-
-export const api = createTRPCReact<AppRouter>();
+import { httpBatchLink } from '@trpc/client';
+import superjson from 'superjson';
+import type { AppRouter } from '@/server/api/root';
 
 export const getBaseUrl = () => {
-  if (typeof window !== 'undefined') return ''; // Browser should use relative URL
+  if (typeof window !== 'undefined') return '';
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return `http://localhost:${process.env.PORT ?? 3000}`; // Dev SSR should use localhost
+  return `http://localhost:${process.env.PORT ?? 3000}`;
 };
 
 export const getUrl = () => {
-  const baseUrl = getBaseUrl();
-  return `${baseUrl}/api/trpc`;
+  return `${getBaseUrl()}/api/trpc`;
 };
 
-// Export config for consistent port usage
-export const config = {
-  defaultPort: 3000,
-  apiPath: '/api/trpc',
-  links: {
-    maxRetries: 3,
-    retryDelay: 500,
-  },
-};
+export const trpc = createTRPCReact<AppRouter>();
+
+export const api = trpc;
+
+export const transformer = superjson;

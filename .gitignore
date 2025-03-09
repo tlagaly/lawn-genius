@@ -5,6 +5,11 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/cypress/videos/
+/cypress/screenshots/
 
 # next.js
 /.next/
@@ -12,10 +17,12 @@
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
 *.pem
+Thumbs.db
 
 # debug
 npm-debug.log*
@@ -25,6 +32,9 @@ yarn-error.log*
 # local env files
 .env
 .env*.local
+.env.development
+.env.staging
+.env.production
 
 # vercel
 .vercel
@@ -33,15 +43,19 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Prisma
-/prisma/migrations/
-/prisma/*.db
-/prisma/*.db-journal
-
 # IDE
-.vscode/
 .idea/
+.vscode/
+*.swp
+*.swo
 
-# Cline configuration
-.clinerules-*
-.roomodes
+# Prisma
+/prisma/dev.db
+/prisma/migrations/dev/
+
+# Logs
+logs
+*.log
+
+# Cache
+.cache/

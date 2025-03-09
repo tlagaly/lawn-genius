@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 interface EmailOptions {
   to: string;
@@ -8,51 +8,46 @@ interface EmailOptions {
   headers?: Record<string, string>;
 }
 
-// For testing, we'll use a mock transporter
-const createTransporter = () => {
-  if (process.env.NODE_ENV === 'test' || process.env.SKIP_EMAIL_SENDING === 'true') {
-    return nodemailer.createTransport({
-      host: 'smtp.ethereal.email',
-      port: 587,
-      auth: {
-        user: 'test@ethereal.email',
-        pass: 'testpass'
-      }
-    });
-  }
+// For testing purposes
+let mockEnabled = false;
+let mockImplementation: ((options: EmailOptions) => Promise<void>) | null = null;
 
-  // Production email configuration
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
-    }
-  });
-};
+export function enableEmailMocking(implementation?: (options: EmailOptions) => Promise<void>) {
+  mockEnabled = true;
+  mockImplementation = implementation || (async () => Promise.resolve());
+}
+
+export function disableEmailMocking() {
+  mockEnabled = false;
+  mockImplementation = null;
+}
 
 export async function sendEmail(options: EmailOptions): Promise<void> {
-  // Skip actual sending in test environment
-  if (process.env.NODE_ENV === 'test' || process.env.SKIP_EMAIL_SENDING === 'true') {
-    console.log('Test environment: Skipping email send', options);
+  if (process.env.SKIP_EMAIL_SENDING === 'true') {
     return;
   }
 
-  const transporter = createTransporter();
-  
+  if (mockEnabled && mockImplementation) {
+    return mockImplementation(options);
+  }
+
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('Missing Resend API key');
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
   try {
-    const { headers, ...emailOptions } = options;
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM || 'noreply@lawngenius.com',
-      ...emailOptions,
-      headers: headers || {}
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM || 'noreply@lawngenius.app',
+      to: options.to,
+      subject: options.subject,
+      text: options.text,
+      html: options.html,
+      headers: options.headers,
     });
   } catch (error) {
     console.error('Failed to send email:', error);
-    throw new Error('Failed to send email');
+    throw error;
   }
 }
-
-// For testing purposes
-export const mockSendEmail = jest.fn(async () => Promise.resolve());

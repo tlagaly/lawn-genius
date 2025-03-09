@@ -1,32 +1,37 @@
-# Lawn Genius
+# LawnSync.ai
 
-A smart lawn care management system that helps users maintain their lawns with weather-optimized treatment scheduling.
+Smart lawn care management powered by AI.
 
 ## Features
 
-- **Smart Scheduling**: Weather-aware treatment scheduling with real-time monitoring
-- **Weather Integration**: Real-time weather data and forecasting for optimal treatment timing
-- **Treatment Management**: Track and manage lawn care treatments with effectiveness monitoring
-- **Weather Alerts**: Automated alerts for unfavorable weather conditions with rescheduling suggestions
-- **Multi-Lawn Support**: Manage multiple lawn profiles with location-specific care
-- **Subscription Plans**: Tiered access to advanced features
+- User Management & Authentication
+- Lawn Profile Management
+- Weather Integration & Alerts
+- Scheduling System
+- AI-Powered Recommendations
 
 ## Tech Stack
 
-- **Frontend**: Next.js 13+ with App Router
-- **Backend**: TRPC for type-safe APIs
-- **Database**: PostgreSQL with Prisma ORM
+- **Frontend**: Next.js, React, TailwindCSS
+- **Backend**: tRPC, Prisma, PostgreSQL
 - **Authentication**: NextAuth.js
-- **Styling**: Tailwind CSS
-- **Weather Data**: OpenWeather API
-- **Payments**: Stripe Integration
+- **APIs**: OpenWeather, Stripe, Resend
+- **Infrastructure**: Vercel, Redis (Upstash)
 
 ## Getting Started
 
+### Prerequisites
+
+- Node.js 20.x or later
+- PostgreSQL
+- Redis (via Upstash)
+
+### Environment Setup
+
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/lawn-genius.git
-cd lawn-genius
+git clone https://github.com/yourusername/lawnsync.ai.git
+cd lawnsync.ai
 ```
 
 2. Install dependencies
@@ -36,48 +41,98 @@ npm install
 
 3. Set up environment variables
 ```bash
-cp .env.example .env
+cp .env.example .env.local
 ```
-Fill in the required environment variables in `.env`
 
 4. Set up the database
 ```bash
-npx prisma generate
-npx prisma db push
+npx prisma migrate dev
+npx prisma db seed
 ```
 
-5. Run the development server
+5. Start the development server
 ```bash
 npm run dev
 ```
 
-## Environment Variables
+### Environment Variables
 
 Required environment variables:
-- `DATABASE_URL`: PostgreSQL connection string
-- `NEXTAUTH_SECRET`: Secret for NextAuth.js
-- `OPENWEATHER_API_KEY`: API key for OpenWeather
-- `STRIPE_SECRET_KEY`: Stripe secret key
-- `STRIPE_WEBHOOK_SECRET`: Stripe webhook secret
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: Stripe publishable key
 
-## Project Structure
+```env
+# Database
+DATABASE_URL=
 
-- `/src/app`: Next.js 13+ app router pages and layouts
-- `/src/components`: React components
-- `/src/lib`: Utility functions and service integrations
-- `/src/types`: TypeScript type definitions
-- `/prisma`: Database schema and migrations
-- `/memory-bank`: Project documentation and architecture decisions
+# Authentication
+NEXTAUTH_SECRET=
+NEXTAUTH_URL=
+
+# External Services
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+RESEND_API_KEY=
+OPENWEATHER_API_KEY=
+
+# Rate Limiting
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+```
+
+## Development
+
+### Commands
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run test` - Run tests
+- `npm run test:e2e` - Run end-to-end tests
+- `npm run lint` - Run linter
+
+### Testing
+
+- Unit tests with Jest
+- E2E tests with Playwright
+- API tests with Cypress
+
+### Deployment
+
+Deployments are handled through Vercel:
+
+- Production: https://lawnsync.ai
+- Staging: https://staging.lawnsync.ai
+
+## Architecture
+
+### Directory Structure
+
+```
+├── src/
+│   ├── app/          # Next.js app router
+│   ├── components/   # React components
+│   ├── lib/          # Utility functions
+│   ├── server/       # Server-side code
+│   └── types/        # TypeScript types
+├── prisma/           # Database schema
+├── public/           # Static assets
+└── scripts/          # Utility scripts
+```
+
+### Key Components
+
+- **Authentication**: NextAuth.js with email/password and OAuth
+- **API Layer**: tRPC for type-safe APIs
+- **Database**: Prisma ORM with PostgreSQL
+- **Monitoring**: Custom monitoring system
+- **Rate Limiting**: Upstash Redis implementation
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a pull request
+1. Create a feature branch
+2. Make your changes
+3. Run tests
+4. Submit a pull request
 
 ## License
 
-MIT License - see LICENSE file for details
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

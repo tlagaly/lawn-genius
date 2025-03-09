@@ -1,14 +1,19 @@
 import { Session } from 'next-auth';
+import { JWT } from 'next-auth/jwt';
 
-export const createDevSession = (): Session => {
+export const createDevSession = (): JWT => {
+  const now = Math.floor(Date.now() / 1000);
+  const id = 'test-user-id';
   return {
-    user: {
-      id: 'test-user-id',
-      email: 'test@example.com',
-      name: 'Test User',
-      image: null,
-    },
-    expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    id,
+    name: 'Test User',
+    email: 'test@example.com',
+    sub: id,
+    picture: null,
+    role: 'USER',
+    iat: now,
+    exp: now + (24 * 60 * 60), // 24 hours
+    jti: `dev-session-${now}`,
   };
 };
 
@@ -19,4 +24,5 @@ export const getDevUser = () => ({
   email: 'test@example.com',
   name: 'Test User',
   image: null,
+  role: 'USER',
 });

@@ -1,0 +1,107 @@
+{
+  "environments": {
+    "development": {
+      "url": "http://localhost:3000",
+      "database": {
+        "poolSize": 5,
+        "ssl": false
+      },
+      "features": {
+        "debugMode": true,
+        "mockServices": true
+      }
+    },
+    "staging": {
+      "url": "https://staging.lawngenius.app",
+      "database": {
+        "poolSize": 10,
+        "ssl": true
+      },
+      "features": {
+        "debugMode": true,
+        "mockServices": false
+      }
+    },
+    "production": {
+      "url": "https://lawngenius.app",
+      "database": {
+        "poolSize": 20,
+        "ssl": true
+      },
+      "features": {
+        "debugMode": false,
+        "mockServices": false
+      }
+    }
+  },
+  "deployment": {
+    "staging": {
+      "requiredChecks": [
+        "validate",
+        "e2e-tests",
+        "build"
+      ],
+      "autoDeployBranches": ["main"],
+      "deploymentDelay": "5m",
+      "rollbackEnabled": true
+    },
+    "production": {
+      "requiredChecks": [
+        "validate",
+        "e2e-tests",
+        "build",
+        "deploy-staging"
+      ],
+      "autoDeployBranches": ["main"],
+      "deploymentDelay": "15m",
+      "rollbackEnabled": true,
+      "requiredApprovals": 1
+    }
+  },
+  "monitoring": {
+    "errorTracking": true,
+    "performanceMonitoring": true,
+    "loggingLevel": {
+      "development": "debug",
+      "staging": "info",
+      "production": "warn"
+    },
+    "alerts": {
+      "errorThreshold": 5,
+      "responseTimeThreshold": 2000,
+      "uptimeCheck": "1m"
+    }
+  },
+  "security": {
+    "rateLimiting": {
+      "development": {
+        "enabled": false
+      },
+      "staging": {
+        "enabled": true,
+        "maxRequests": 100,
+        "timeWindow": 60
+      },
+      "production": {
+        "enabled": true,
+        "maxRequests": 50,
+        "timeWindow": 60
+      }
+    },
+    "headers": {
+      "development": {
+        "strictTransportSecurity": false
+      },
+      "staging": {
+        "strictTransportSecurity": true,
+        "contentSecurityPolicy": true,
+        "xFrameOptions": "DENY"
+      },
+      "production": {
+        "strictTransportSecurity": true,
+        "contentSecurityPolicy": true,
+        "xFrameOptions": "DENY"
+      }
+    }
+  }
+}

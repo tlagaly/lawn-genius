@@ -1,0 +1,28 @@
+# Branch protection rules
+
+branches:
+  - name: main
+    protection:
+      required_status_checks:
+        strict: true
+        contexts:
+          - "Validate"
+          - "E2E Tests"
+          - "Build"
+      required_pull_request_reviews:
+        required_approving_review_count: 1
+        dismiss_stale_reviews: true
+      enforce_admins: true
+      restrictions: null
+
+  - name: staging
+    protection:
+      required_status_checks:
+        strict: true
+        contexts:
+          - "Validate"
+          - "E2E Tests"
+      required_pull_request_reviews:
+        required_approving_review_count: 1
+      enforce_admins: false
+      restrictions: null

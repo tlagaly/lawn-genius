@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "buildCommand": "npm run prisma:generate && npm run build:production",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "env": {
+    "NODE_ENV": "production",
+    "DATABASE_RELATION_MODE": "prisma",
+    "DATABASE_SSL_ENABLED": "true",
+    "DATABASE_SSL_REJECT_UNAUTHORIZED": "true",
+    "DATABASE_POOL_MIN": "2",
+    "DATABASE_POOL_MAX": "20",
+    "DATABASE_POOL_TIMEOUT": "30000",
+    "DATABASE_POOL_IDLE_TIMEOUT": "60000"
+  },
+  "framework": "nextjs",
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "staging": true
+    }
+  },
+  "env": {
+    "NODE_ENV": "production",
+    "ENABLE_RATE_LIMITING": "true",
+    "MAX_REQUESTS_PER_MINUTE": "100",
+    "ENABLE_SSL": "true",
+    "ENABLE_ERROR_MONITORING": "true",
+    "ENABLE_PERFORMANCE_MONITORING": "true",
+    "ENABLE_AUDIT_LOGGING": "true",
+    "LOG_LEVEL": "warn",
+    "DATABASE_RELATION_MODE": "prisma",
+    "DATABASE_SSL_ENABLED": "true",
+    "DATABASE_SSL_REJECT_UNAUTHORIZED": "true"
+  }
+}

@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "prisma:generate": "prisma generate",
     "start": "next start",
     "lint": "next lint",
     "generate-vapid-keys": "node scripts/generate-vapid-keys.js",
@@ -15,7 +16,7 @@
     "setup-test-db": "ts-node scripts/setup-test-db.ts",
     "test": "npm run setup-test-db && jest",
     "test:coverage": "npm run setup-test-db && jest --coverage --coverageReporters='json-summary' --coverageReporters='text' --coverageReporters='html'",
-    "prepare": "husky install",
+    "prepare": "npm install prisma --no-save && prisma generate && husky install",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "cypress:run:auth": "cypress run --spec 'cypress/e2e/auth/**/*.cy.ts'",

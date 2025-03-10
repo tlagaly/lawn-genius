@@ -1,13 +1,13 @@
 import { inferAsyncReturnType } from '@trpc/server';
-import { getServerSession, Session } from 'next-auth';
+import { Session } from 'next-auth';
 import { prisma } from '../db/prisma';
-import { authOptions } from '../auth/auth-options';
-import { headers as NextHeaders, type ReadonlyHeaders } from 'next/headers';
+import { headers } from 'next/headers';
 import { isDevMode, createDevSession } from '../auth/dev-auth';
+import type { CustomSession } from '../auth/auth-options';
 
 interface CreateContextOptions {
-  headers: ReadonlyHeaders | Headers;
-  session: Session | null;
+  headers: Headers;
+  session: CustomSession | null;
 }
 
 export async function createContext(opts: CreateContextOptions) {
@@ -16,11 +16,6 @@ export async function createContext(opts: CreateContextOptions) {
     const headers = new Headers();
     if (opts.headers instanceof Headers) {
       Array.from(opts.headers.entries()).forEach(([key, value]) => {
-        headers.set(key, value);
-      });
-    } else {
-      // Handle next/headers ReadonlyHeaders
-      opts.headers.forEach((value: string, key: string) => {
         headers.set(key, value);
       });
     }

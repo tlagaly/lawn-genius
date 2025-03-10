@@ -1,5 +1,5 @@
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
-import { appRouter } from '@/lib/trpc/root';
+import { appRouter } from '@/server/api/root';
 import { createContext } from '@/lib/trpc/context';
 import { NextRequest } from 'next/server';
 import { TRPCError } from '@trpc/server';
@@ -12,20 +12,7 @@ const handler = (req: NextRequest) => {
     req,
     router: appRouter,
     createContext: async () => {
-      let session = await getServerSession(authOptions);
-      
-      // In development, provide a mock session for the test account
-      if (process.env.NODE_ENV === 'development' && !session) {
-        session = {
-          user: {
-            id: 'test-user-id',
-            email: 'test@example.com',
-            name: 'Test User',
-          },
-          expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        };
-      }
-
+      const session = await getServerSession(authOptions);
       return createContext({
         headers: req.headers,
         session,

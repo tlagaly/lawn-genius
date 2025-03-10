@@ -1,6 +1,13 @@
-import { Session } from "next-auth";
 import { getSession, signOut } from "next-auth/react";
-import { validateToken, needsRefresh } from "./jwt";
+import { validateToken } from "./jwt";
+import {
+  ValidSession,
+  toValidSession,
+  ensureValidSession,
+  ensureValidSessionUser
+} from "./types";
+import { createStorage } from "./storage";
+import type { Session } from "next-auth";
 
 export interface SessionStatus {
   isAuthenticated: boolean;
@@ -8,9 +15,42 @@ export interface SessionStatus {
   error?: string;
 }
 
+interface StoredSessionData {
+  userId: string;
+  expires: string;
+}
+
+interface ValidStoredSession extends StoredSessionData {
+  userId: string;
+  expires: string;
+}
+
+const storage = createStorage();
+
 /**
- * Session management utilities
+ * Type guard for validating stored session data
  */
+const isValidStoredSession = (data: unknown): data is ValidStoredSession => {
+  if (!data || typeof data !== 'object') return false;
+  
+  const sessionData = data as Record<string, unknown>;
+  return !!(
+    'userId' in sessionData &&
+    typeof sessionData.userId === 'string' &&
+    'expires' in sessionData &&
+    typeof sessionData.expires === 'string'
+  );
+};
+
+/**
+ * Ensure stored session data is valid
+ */
+const ensureValidStoredSession = (data: unknown): ValidStoredSession => {
+  if (!isValidStoredSession(data)) {
+    throw new Error('Invalid stored session data');
+  }
+  return data;
+};
 
 /**
  * Initialize and validate the current session
@@ -18,12 +58,26 @@ export interface SessionStatus {
 export const initializeSession = async (): Promise<SessionStatus> => {
   try {
     const session = await getSession();
+    const validSession = session && toValidSession(session);
 
-    if (!session) {
+    if (!validSession) {
       return {
         isAuthenticated: false,
         isLoading: false,
-        error: "No session found"
+        error: "Invalid or missing session"
+      };
+    }
+
+    ensureValidSessionUser(validSession);
+
+    // Validate session expiration
+    const expires = new Date(validSession.expires);
+    if (expires < new Date()) {
+      await signOut({ redirect: false });
+      return {
+        isAuthenticated: false,
+        isLoading: false,
+        error: "Session expired"
       };
     }
 
@@ -39,15 +93,6 @@ export const initializeSession = async (): Promise<SessionStatus> => {
           error: validation.error
         };
       }
-
-      // Check if token needs refresh
-      if (needsRefresh(token)) {
-        // Token will be refreshed automatically by NextAuth on next request
-        return {
-          isAuthenticated: true,
-          isLoading: true
-        };
-      }
     }
 
     return {
@@ -59,7 +104,7 @@ export const initializeSession = async (): Promise<SessionStatus> => {
     return {
       isAuthenticated: false,
       isLoading: false,
-      error: "Failed to initialize session"
+      error: error instanceof Error ? error.message : "Failed to initialize session"
     };
   }
 };
@@ -70,14 +115,23 @@ export const initializeSession = async (): Promise<SessionStatus> => {
 export const sessionEvents = {
   onSignIn: async (session: Session) => {
     try {
+      // Clean up any existing session data first
+      sessionPersistence.clear();
+
       // Validate new session
       const status = await initializeSession();
       if (!status.isAuthenticated) {
         throw new Error(status.error || "Session validation failed after sign in");
       }
 
-      // Update any necessary UI state or perform post-sign-in tasks
-      return true;
+      // Convert and validate session
+      const validSession = toValidSession(session);
+      if (!validSession) {
+        throw new Error("Invalid session data");
+      }
+
+      ensureValidSessionUser(validSession);
+      return sessionPersistence.save(validSession);
     } catch (error) {
       console.error("Sign in event handler error:", error);
       return false;
@@ -86,11 +140,15 @@ export const sessionEvents = {
 
   onSignOut: async () => {
     try {
-      // Clear any persistent session data
-      window.sessionStorage.removeItem("sessionState");
-      window.localStorage.removeItem("sessionState");
+      // Clear all session data
+      sessionPersistence.clear();
       
-      // Perform any additional cleanup
+      // Clear any other auth-related state
+      const authKeys = ["next-auth.callback-url", "next-auth.message"] as const;
+      for (const key of authKeys) {
+        storage.removeItem(key);
+      }
+      
       return true;
     } catch (error) {
       console.error("Sign out event handler error:", error);
@@ -103,18 +161,23 @@ export const sessionEvents = {
  * Session persistence helpers
  */
 export const sessionPersistence = {
-  save: (session: Session) => {
+  save: (session: ValidSession): boolean => {
     try {
-      // Save minimal session data
-      const sessionData = {
+      ensureValidSessionUser(session);
+
+      const sessionData: ValidStoredSession = {
         userId: session.user.id,
         expires: session.expires
       };
-      
-      // Save to both storage types for resilience
-      window.sessionStorage.setItem("sessionState", JSON.stringify(sessionData));
-      window.localStorage.setItem("sessionState", JSON.stringify(sessionData));
-      
+
+      // Serialize and store data
+      const serialized = JSON.stringify(sessionData);
+      const success = storage.setItem("sessionState", serialized);
+
+      if (!success) {
+        throw new Error("Failed to save session state");
+      }
+
       return true;
     } catch (error) {
       console.error("Failed to save session state:", error);
@@ -122,35 +185,40 @@ export const sessionPersistence = {
     }
   },
 
-  restore: function(): { userId: string; expires: string } | null {
+  restore: (): ValidStoredSession | null => {
     try {
-      // Try session storage first, fall back to local storage
-      const data = window.sessionStorage.getItem("sessionState") ||
-                   window.localStorage.getItem("sessionState");
+      const data = storage.getItem("sessionState");
       if (!data) return null;
 
-      const sessionData = JSON.parse(data);
-      
-      // Validate restored data
-      if (!sessionData.userId || !sessionData.expires) {
-        return null;
-      }
-
-      // Check if expired
-      if (new Date(sessionData.expires) < new Date()) {
+      let parsedData: unknown;
+      try {
+        parsedData = JSON.parse(data);
+      } catch {
         this.clear();
         return null;
       }
 
-      return sessionData;
+      // Validate and ensure type safety
+      const validData = ensureValidStoredSession(parsedData);
+
+      // Check expiration
+      const expires = new Date(validData.expires);
+      if (expires < new Date()) {
+        this.clear();
+        return null;
+      }
+
+      return validData;
     } catch (error) {
       console.error("Failed to restore session state:", error);
+      this.clear();
       return null;
     }
   },
 
-  clear: () => {
-    window.sessionStorage.removeItem("sessionState");
-    window.localStorage.removeItem("sessionState");
+  clear: (): void => {
+    if (storage) {
+      storage.removeItem("sessionState");
+    }
   }
 };

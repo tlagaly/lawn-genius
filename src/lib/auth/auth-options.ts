@@ -15,7 +15,7 @@ interface CustomUser extends User {
   image?: string | null;
 }
 
-interface CustomSession extends Session {
+export interface CustomSession extends Session {
   user: {
     id: string;
     email: string;

@@ -1,4 +1,4 @@
-import { JWT } from "next-auth/jwt";
+import { JWT } from "./types";
 
 /**
  * JWT validation and management utilities
@@ -63,5 +63,5 @@ export const formatTokenData = (token: JWT) => {
     email: token.email!,
     image: token.picture || null,
     role: token.role || "USER",
-  };
+  } as const;
 };

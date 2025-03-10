@@ -1,7 +1,7 @@
 import { FC, ReactNode, useEffect } from 'react';
 import { SessionProvider as NextAuthSessionProvider } from 'next-auth/react';
-import { Session } from 'next-auth';
-import { initializeSession, sessionPersistence, sessionEvents } from '@/lib/auth/session';
+import { sessionEvents, sessionPersistence } from '@/lib/auth/session';
+import { Session } from '@/lib/auth/types';
 
 interface SessionProviderProps {
   children: ReactNode;
@@ -10,34 +10,28 @@ interface SessionProviderProps {
 
 export const SessionProvider: FC<SessionProviderProps> = ({ children, session }) => {
   useEffect(() => {
-    const initSession = async () => {
-      try {
-        const status = await initializeSession();
-        
-        if (!status.isAuthenticated && status.error) {
-          console.error('Session initialization failed:', status.error);
-        }
-      } catch (error) {
-        console.error('Failed to initialize session:', error);
-      }
-    };
-
-    initSession();
-
     // Set up session change listener
     const handleStorageChange = async (event: StorageEvent) => {
       if (event.key === 'next-auth.session-token') {
-        const newSession = await initializeSession();
-        
-        if (newSession.isAuthenticated && session) {
-          await sessionEvents.onSignIn(session);
-          sessionPersistence.save(session);
-        } else if (!newSession.isAuthenticated) {
+        if (event.newValue) {
+          // New session established
+          if (session) {
+            await sessionEvents.onSignIn(session);
+            sessionPersistence.save(session);
+          }
+        } else {
+          // Session ended
           await sessionEvents.onSignOut();
           sessionPersistence.clear();
         }
       }
     };
+
+    // Clean up any orphaned session data on mount
+    const storedSession = sessionPersistence.restore();
+    if (storedSession && (!session || storedSession.userId !== session.user.id)) {
+      sessionPersistence.clear();
+    }
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
